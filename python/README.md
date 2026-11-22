@@ -277,7 +277,7 @@ MLflowの`log_image(key=, step=)`と`log_table`で記録したものも、同じ
 
 ### S3の場所をストレージ接続つきで登録する
 
-サイトがmado S3 Data Catalogに接続済みなら、`s3://`のURIを登録するときに、その場所があるストレージ接続（mado S3 Data Catalogの接続）のIDが要る。無いとAPIが422 `data_catalog_storage_connection_required`で断る。IDは`data_catalog`で引く。未接続のサイトでは渡さない。
+サイトがmado S3 Data Catalogに接続済みなら、`s3://`のURIを登録するときに、その場所があるストレージ接続（mado S3 Data Catalogの接続）のIDを渡せる。渡さなくても登録でき、あとから付けられる。IDは`data_catalog`で引く。未接続のサイトでは渡さない。
 
 ```python
 from mado_tracking import Client
@@ -296,6 +296,17 @@ with Client() as client:
 ```
 
 `register_model`も、`weights_uri`が`s3://`なら同じ引数を取る。IDは画面のリンク（mado S3 Data Catalogで開く）の行き先を決めるだけで、実行先がどのS3から読むかは変えない。
+
+登録済みのバージョンには、あとから付ける・直す・外すことができる（`None`で外す）。変わるのはストレージ接続だけで、URIとdigestは変わらない。
+
+```python
+client.set_dataset_version_storage_connection(
+    project_id, dataset_id=dataset_id, version_id=version_id, storage_connection_id=storage["id"]
+)
+client.set_model_version_storage_connection(
+    project_id, model_id=model_id, version_id=version_id, storage_connection_id=None
+)
+```
 
 ### ディレクトリからデータセットバージョンを作る
 

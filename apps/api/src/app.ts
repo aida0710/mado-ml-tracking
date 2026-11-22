@@ -185,6 +185,8 @@ import { tokenRoutes } from './routes/tokenRoutes.js';
 import { serviceAccountRoutes } from './routes/serviceAccountRoutes.js';
 import { dataCatalogPluginRoutes } from './routes/dataCatalogPluginRoutes.js';
 import { dataCatalogStorageRoutes } from './routes/dataCatalogStorageRoutes.js';
+import { versionStorageConnectionRoutes } from './routes/versionStorageConnectionRoutes.js';
+import { VersionStorageConnectionService } from './services/versionStorageConnectionService.js';
 import { evaluationRoutes } from './routes/evaluationRoutes.js';
 import { modelEvaluationRoutes } from './routes/modelEvaluationRoutes.js';
 import { promotionRoutes } from './routes/promotionRoutes.js';
@@ -528,6 +530,12 @@ export function createApplication(options: ApplicationOptions) {
   );
   app.route('/api/projects', modelAutomationRoutes(automation));
   app.route('/api/projects', dataCatalogStorageRoutes(dataCatalogConnection));
+  app.route(
+    '/api/projects',
+    versionStorageConnectionRoutes(
+      new VersionStorageConnectionService(database, dataCatalogConnection),
+    ),
+  );
   app.route('/api/projects', datasetVersionParentRoutes(new DatasetVersionParentService(database)));
   app.route('/api/projects', lineageRelationRoutes(new LineageRelationService(database)));
   app.route('/api/projects', trainingDataStageRoutes(new TrainingDataStageService(database)));

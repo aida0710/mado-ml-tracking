@@ -34,7 +34,7 @@ mado S3 Data Catalogから読むのは、アクセストークン自身の情報
 
 ## ストレージ接続を指定して登録する
 
-mado S3 Data Catalogに接続済みのサイトでは、`s3://`のURIを登録するときに、その場所があるストレージ接続を指定します。指定しないと登録できません（422 `data_catalog_storage_connection_required`）。
+mado S3 Data Catalogに接続済みのサイトでは、`s3://`のURIを登録するときに、その場所があるストレージ接続を指定できます。指定は任意で、指定しなくても登録でき、[あとから付けられます](#ストレージ接続をあとから付ける直す)。
 
 | 登録の方法 | 指定のしかた |
 | --- | --- |
@@ -42,17 +42,31 @@ mado S3 Data Catalogに接続済みのサイトでは、`s3://`のURIを登録�
 | API | 本文の`dataCatalogStorageConnectionId`。IDは`GET /api/projects/:p/data-catalog`の`storageConnections`で引く |
 | Python SDK | `register_dataset`・`register_model`の`data_catalog_storage_connection_id`。IDは`client.data_catalog(project_id)`で引く |
 
-- 必須になるのは、人・API・SDKが登録する`s3://`のURIだけです。`file://`や`https://`のURI、Artifactを中身にするバージョン、未接続のサイトでは指定できません（422 `data_catalog_storage_connection_not_applicable`）。
+- 指定できるのは`s3://`のURIだけです。`file://`や`https://`のURI、Artifactを中身にするバージョン、未接続のサイトでは指定できません（422 `data_catalog_storage_connection_not_applicable`）。
 - Jobの出力の宣言、Taskの出力の登録、MLflowのクライアントが作るバージョンは、ストレージ接続を持ちません。接続済みでも今までどおり作れ、リンクは出ません。
 - 指定できるのは、アクセストークンに許可したストレージ接続です。一覧は接続・確認のときに覚えます。覚えていないIDが来たときだけmado S3 Data Catalogへ読み直し、それでも無ければ断ります（422 `data_catalog_storage_connection_unknown`）。mado S3 Data Catalogと通信できなくても、覚えているストレージ接続なら登録できます。
 - **ストレージ接続は、リンクの行き先を決めるだけです。** 実行先のコンピュータがどのS3から読むかは、今までどおり実行先の環境変数（`AWS_*`）で決まります。
-- v0.5.4までのPython SDKは`s3://`のURIをストレージ接続なしで送るので、接続済みのサイトでは登録できなくなります。SDKを更新して引数を足します。
+- v0.5.4までのPython SDKは`s3://`のURIをストレージ接続なしで送ります。接続済みのサイトでも登録でき、ストレージ接続は未設定になります。
+
+## ストレージ接続をあとから付ける・直す
+
+登録済みのバージョンのストレージ接続は、あとから付ける・別の接続へ直す・外すことができます。変わるのはストレージ接続だけで、URIやdigestは変わりません。Projectを編集できる人が使えます。
+
+| 方法 | やりかた |
+| --- | --- |
+| 画面 | データセットかモデルのバージョンのURIの横の「ストレージ接続を設定」「ストレージ接続を変更」 |
+| API | `PUT /api/projects/:p/datasets/:d/versions/:v/data-catalog-storage-connection`（モデルは`models/:m`）。本文は`{"dataCatalogStorageConnectionId": "<ID>"}`で、`null`なら外す |
+| Python SDK | `set_dataset_version_storage_connection`・`set_model_version_storage_connection` |
+
+- 接続する前に登録したバージョンは、接続したあとにこの方法で付けます。
+- mado S3 Data Catalogで接続を作り直すと、同じ場所でもストレージ接続のIDが変わります。古いIDを持つバージョンは、IDを残したまま「ストレージ接続が見つかりません」と表示し、リンクを出しません。新しいストレージ接続へ直すと、リンクが戻ります。
+- 一覧に無いIDには直せません（422 `data_catalog_storage_connection_unknown`）。
 
 ## S3の場所をmado S3 Data Catalogで開く
 
 ストレージ接続を持つバージョンには、URIの横に「mado S3 Data Catalogで開く」のリンクが出ます。押すと、mado S3 Data Catalogのそのフォルダかファイルの画面が別のタブで開きます。中身を見られるかは、mado S3 Data Catalogのログインと権限で決まります。
 
-- リンクが出るのは、バージョンのストレージ接続が今の一覧にあるときだけです。ストレージ接続を持たないバージョン（この機能より前に登録したもの、Jobの出力など）、接続を解除したサイト、別のmado S3 Data Catalogへ接続し直したあとの古いIDには出ません。
+- リンクが出るのは、バージョンのストレージ接続が今の一覧にあるときだけです。ストレージ接続を持たないバージョン（接続する前や指定なしで登録したもの、Jobの出力など）、接続を解除したサイト、別のmado S3 Data Catalogへ接続し直したあとの古いIDには出ません。古いIDのバージョンには、代わりに「ストレージ接続が見つかりません」と出ます。
 - 末尾が`/`のURIはフォルダとして、それ以外はファイルとして開きます（mado S3 Data Catalogの決まり）。フォルダを末尾の`/`なしで登録したURIは、親のフォルダが開きます。
 
 ## mado S3 Data CatalogのURLをS3のURIに直す

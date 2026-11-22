@@ -325,7 +325,6 @@ export const API_ERROR_CODES = [
   'data_catalog_secret_decryption_failed',
   'data_catalog_secret_key_unavailable',
   'data_catalog_storage_connection_not_applicable',
-  'data_catalog_storage_connection_required',
   'data_catalog_storage_connection_unknown',
   'data_catalog_storage_connections_unsupported',
   // リポジトリ

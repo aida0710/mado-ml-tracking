@@ -126,15 +126,13 @@ describe.skipIf(!testDatabaseUrl)('mado S3 Data Catalogのストレージ接続�
   });
 
   describe('データセットのバージョンの登録', () => {
-    it('接続済みなら、s3://のURIにはストレージ接続が要る', async () => {
+    it('接続済みでも、s3://のURIをストレージ接続なしで登録できる', async () => {
       const { registerDatasetVersion } = await connectedRegistry();
       // v0.5.4までのPython SDKが送る本文。
-      const response = await registerDatasetVersion({ version: 'v1', uri: 's3://corpus/ja/', externalRef: null });
-      expect(response.status).toBe(422);
-      expect(await response.json()).toMatchObject({
-        code: 'data_catalog_storage_connection_required',
-        error: expect.stringContaining('dataCatalogStorageConnectionId'),
-      });
+      const version = await entity<DatasetVersion>(
+        await registerDatasetVersion({ version: 'v1', uri: 's3://corpus/ja/', externalRef: null }),
+      );
+      expect(version.dataCatalogStorageConnectionId).toBeNull();
     });
 
     it('一覧にあるストレージ接続を指定すると保存し、バージョンに返す', async () => {
@@ -273,17 +271,18 @@ describe.skipIf(!testDatabaseUrl)('mado S3 Data Catalogのストレージ接続�
       );
       const registerModelVersion = (body: Record<string, unknown>, cookie = fixture.editor.cookie) =>
         request(app, `${fixture.basePath}/models/${model.id}/versions`, { method: 'POST', cookie, body });
-      return { ...registry, registerModelVersion };
+      return { ...registry, model, registerModelVersion };
     }
 
-    it('接続済みなら、s3://の重みのURIにはストレージ接続が要り、指定すると保存する', async () => {
+    it('接続済みなら、s3://の重みのURIはストレージ接続なしでも登録でき、指定すると保存する', async () => {
       const { registerModelVersion } = await connectedModel();
-      const missing = await registerModelVersion({ version: 'v1', weightsUri: 's3://models/v1.bin' });
-      expect(missing.status).toBe(422);
-      expect(await missing.json()).toMatchObject({ code: 'data_catalog_storage_connection_required' });
+      const unset = await entity<ModelVersion>(
+        await registerModelVersion({ version: 'v1', weightsUri: 's3://models/v1.bin' }),
+      );
+      expect(unset.dataCatalogStorageConnectionId).toBeNull();
       const version = await entity<ModelVersion>(
         await registerModelVersion({
-          version: 'v1', weightsUri: 's3://models/v1.bin', dataCatalogStorageConnectionId: ON_PREMISES.id,
+          version: 'v2', weightsUri: 's3://models/v2.bin', dataCatalogStorageConnectionId: ON_PREMISES.id,
         }),
       );
       expect(version.dataCatalogStorageConnectionId).toBe(ON_PREMISES.id);
@@ -310,6 +309,152 @@ describe.skipIf(!testDatabaseUrl)('mado S3 Data Catalogのストレージ接続�
         { version: 'v1', weightsUri: 's3://models/v1.bin' }, fixture.viewer.cookie,
       );
       expect(response.status).toBe(403);
+    });
+  });
+
+  describe('登録済みのバージョンのストレージ接続の付け替え', () => {
+    const AWS = DATA_CATALOG_STORAGE_CONNECTIONS_FIXTURE[1]!;
+    /** 接続済みのサイトに、ストレージ接続の無い`s3://`のバージョンを1つ置く。 */
+    async function unsetDatasetVersion(overrides: Partial<DataCatalogClient> = {}) {
+      const registry = await connectedRegistry(overrides);
+      const { fixture, app, dataset, registerDatasetVersion } = registry;
+      const version = await entity<DatasetVersion>(
+        await registerDatasetVersion({ version: 'v1', uri: 's3://corpus/ja/' }),
+      );
+      const setStorageConnection = (
+        dataCatalogStorageConnectionId: string | null, cookie = fixture.editor.cookie,
+      ) =>
+        request(
+          app,
+          `${fixture.basePath}/datasets/${dataset.id}/versions/${version.id}/data-catalog-storage-connection`,
+          { method: 'PUT', cookie, body: { dataCatalogStorageConnectionId } },
+        );
+      return { ...registry, version, setStorageConnection };
+    }
+
+    it('あとから付け、別の接続へ直し、外せる。URIとdigestは変わらない', async () => {
+      const { version, setStorageConnection } = await unsetDatasetVersion();
+      const attached = await entity<DatasetVersion>(await setStorageConnection(ON_PREMISES.id), 200);
+      expect(attached).toEqual({ ...version, dataCatalogStorageConnectionId: ON_PREMISES.id });
+      const moved = await entity<DatasetVersion>(await setStorageConnection(AWS.id), 200);
+      expect(moved.dataCatalogStorageConnectionId).toBe(AWS.id);
+      const cleared = await entity<DatasetVersion>(await setStorageConnection(null), 200);
+      expect(cleared).toEqual(version);
+      // 同じ値の付け直しは、何も変えずに通る。
+      expect(await entity<DatasetVersion>(await setStorageConnection(null), 200)).toEqual(version);
+    });
+
+    it('付け替えを監査に残す。前のIDも残る', async () => {
+      const { version, setStorageConnection } = await unsetDatasetVersion();
+      await entity(await setStorageConnection(ON_PREMISES.id), 200);
+      await entity(await setStorageConnection(AWS.id), 200);
+      const events = await harness.database.query<{ details: Record<string, unknown> }>(
+        `SELECT details FROM audit_events WHERE action='dataset.version.storage_connection.set'
+           AND resource_id=$1 AND outcome='success' ORDER BY occurred_at`,
+        [version.id],
+      );
+      expect(events.rows.map((event) => event.details)).toMatchObject([
+        { dataCatalogStorageConnectionId: ON_PREMISES.id, previousDataCatalogStorageConnectionId: null },
+        { dataCatalogStorageConnectionId: AWS.id, previousDataCatalogStorageConnectionId: ON_PREMISES.id },
+      ]);
+    });
+
+    it('一覧に無いストレージ接続は、1回読み直してから断る。前の値は変わらない', async () => {
+      const storageConnections = vi.fn(async () => [ON_PREMISES]);
+      const { fixture, app, dataset, setStorageConnection } = await unsetDatasetVersion({ storageConnections });
+      await entity(await setStorageConnection(ON_PREMISES.id), 200);
+      storageConnections.mockClear();
+      const response = await setStorageConnection('unknown01');
+      expect(response.status).toBe(422);
+      expect(await response.json()).toMatchObject({ code: 'data_catalog_storage_connection_unknown' });
+      expect(storageConnections).toHaveBeenCalledTimes(1);
+      const listed = await entity<{ items: DatasetVersion[] }>(
+        await request(app, `${fixture.basePath}/datasets/${dataset.id}/versions`, { cookie: fixture.viewer.cookie }), 200,
+      );
+      expect(listed.items[0]!.dataCatalogStorageConnectionId).toBe(ON_PREMISES.id);
+    });
+
+    it('mado S3 Data Catalogで無くなったストレージ接続のIDは、バージョンに残り、別の接続へ直せる', async () => {
+      let listed = [ON_PREMISES];
+      const { fixture, app, dataset, setStorageConnection } = await unsetDatasetVersion({
+        storageConnections: async () => listed,
+      });
+      await entity(await setStorageConnection(ON_PREMISES.id), 200);
+      // mado S3 Data Catalogで接続を作り直すと、同じ場所でもIDが変わる。
+      listed = [AWS];
+      await entity(
+        await request(app, ADMIN_ENDPOINT, {
+          method: 'PUT', cookie: fixture.administrator.cookie, body: { url: DATA_CATALOG_URL_FIXTURE },
+        }), 200,
+      );
+      const stale = await entity<{ items: DatasetVersion[] }>(
+        await request(app, `${fixture.basePath}/datasets/${dataset.id}/versions`, { cookie: fixture.viewer.cookie }), 200,
+      );
+      expect(stale.items[0]!.dataCatalogStorageConnectionId).toBe(ON_PREMISES.id);
+      const repaired = await entity<DatasetVersion>(await setStorageConnection(AWS.id), 200);
+      expect(repaired.dataCatalogStorageConnectionId).toBe(AWS.id);
+    });
+
+    it('s3://でないURIのバージョンには付けられない。外す指定は通る', async () => {
+      const { fixture, app, dataset, registerDatasetVersion } = await connectedRegistry();
+      const version = await entity<DatasetVersion>(
+        await registerDatasetVersion({ version: 'v1', uri: 'file:///data' }),
+      );
+      const path = `${fixture.basePath}/datasets/${dataset.id}/versions/${version.id}/data-catalog-storage-connection`;
+      const refused = await request(app, path, {
+        method: 'PUT', cookie: fixture.editor.cookie, body: { dataCatalogStorageConnectionId: ON_PREMISES.id },
+      });
+      expect(refused.status).toBe(422);
+      expect(await refused.json()).toMatchObject({ code: 'data_catalog_storage_connection_not_applicable' });
+      await entity(
+        await request(app, path, {
+          method: 'PUT', cookie: fixture.editor.cookie, body: { dataCatalogStorageConnectionId: null },
+        }), 200,
+      );
+    });
+
+    it('編集できない人には、指定の誤りより先に403を返す。無いバージョンは404', async () => {
+      const { fixture, app, dataset, setStorageConnection } = await unsetDatasetVersion();
+      expect((await setStorageConnection('unknown01', fixture.viewer.cookie)).status).toBe(403);
+      const missing = await request(
+        app,
+        `${fixture.basePath}/datasets/${dataset.id}/versions/${dataset.id}/data-catalog-storage-connection`,
+        { method: 'PUT', cookie: fixture.editor.cookie, body: { dataCatalogStorageConnectionId: null } },
+      );
+      expect(missing.status).toBe(404);
+    });
+
+    it('ストレージ接続のほかの列は、DBでも変えられない', async () => {
+      const { version } = await unsetDatasetVersion();
+      await expect(
+        harness.database.query(
+          `UPDATE dataset_versions SET uri='s3://other/', data_catalog_storage_connection_id=$2 WHERE id=$1`,
+          [version.id, ON_PREMISES.id],
+        ),
+      ).rejects.toThrow('Registry versions are immutable');
+    });
+
+    it('モデルのバージョンも、重みのURIがs3://ならあとから付けて外せる', async () => {
+      const { fixture, app } = await connectedRegistry();
+      const model = await entity<Model>(
+        await request(app, `${fixture.basePath}/models`, {
+          method: 'POST', cookie: fixture.editor.cookie, body: { name: 'Speech', family: 'qwen2' },
+        }),
+      );
+      const version = await entity<ModelVersion>(
+        await request(app, `${fixture.basePath}/models/${model.id}/versions`, {
+          method: 'POST', cookie: fixture.editor.cookie, body: { version: 'v1', weightsUri: 's3://models/v1.bin' },
+        }),
+      );
+      const setStorageConnection = (dataCatalogStorageConnectionId: string | null) =>
+        request(
+          app,
+          `${fixture.basePath}/models/${model.id}/versions/${version.id}/data-catalog-storage-connection`,
+          { method: 'PUT', cookie: fixture.editor.cookie, body: { dataCatalogStorageConnectionId } },
+        );
+      const attached = await entity<ModelVersion>(await setStorageConnection(ON_PREMISES.id), 200);
+      expect(attached).toEqual({ ...version, dataCatalogStorageConnectionId: ON_PREMISES.id });
+      expect(await entity<ModelVersion>(await setStorageConnection(null), 200)).toEqual(version);
     });
   });
 });

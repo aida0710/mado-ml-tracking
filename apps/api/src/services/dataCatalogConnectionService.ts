@@ -162,35 +162,26 @@ export class DataCatalogConnectionService {
   }
 
   /**
-   * 人やSDKが登録するバージョンの、ストレージ接続の指定を確かめる。接続済みで`uri`が`s3://`なら
-   * 必須で、それ以外では指定できない。保存してよいID（指定が要らなければnull）を返す。
+   * バージョンに付けるストレージ接続の指定を確かめる（登録と、あとからの付け替えの両方）。指定は
+   * 任意で、無ければnullのまま通す。指定できるのは、接続済みで`uri`が`s3://`のときだけ。一覧に
+   * 無いIDは受け付けない。保存してよいID（指定が無ければnull）を返す。
    */
   async resolveStorageConnectionId(registration: {
     uri: string | null | undefined;
     storageConnectionId: string | null | undefined;
   }): Promise<string | null> {
     const { storageConnectionId } = registration;
-    const isS3Uri = !!registration.uri && parseS3Uri(registration.uri) !== null;
-    // ほとんどの登録は`s3://`でも指定つきでもない。そのときは接続を読まずに済ませる。
-    if (!isS3Uri && !storageConnectionId) return null;
+    // 指定の無い登録が大半。そのときは接続を読まずに済ませる。
+    if (!storageConnectionId) return null;
     const saved = await findDataCatalogConnection(this.database);
-    if (!saved || !isS3Uri) {
-      if (storageConnectionId)
-        throw new DomainError({
-          status: 422,
-          code: 'data_catalog_storage_connection_not_applicable',
-          message: saved
-            ? 'dataCatalogStorageConnectionId applies only to an s3:// URI'
-            : 'dataCatalogStorageConnectionId cannot be set because this site is not connected to mado S3 Data Catalog',
-        });
-      return null;
-    }
-    if (!storageConnectionId)
+    const isS3Uri = !!registration.uri && parseS3Uri(registration.uri) !== null;
+    if (!saved || !isS3Uri)
       throw new DomainError({
         status: 422,
-        code: 'data_catalog_storage_connection_required',
-        message:
-          'dataCatalogStorageConnectionId is required for an s3:// URI; choose the storage connection that holds it (GET /api/projects/{projectId}/data-catalog lists them)',
+        code: 'data_catalog_storage_connection_not_applicable',
+        message: saved
+          ? 'dataCatalogStorageConnectionId applies only to an s3:// URI'
+          : 'dataCatalogStorageConnectionId cannot be set because this site is not connected to mado S3 Data Catalog',
       });
     const isKnown = (storageConnections: DataCatalogStorageConnection[]) =>
       storageConnections.some((storageConnection) => storageConnection.id === storageConnectionId);
@@ -295,7 +286,8 @@ export class DataCatalogConnectionService {
     }
   }
 
-  // ストレージ接続を読めない接続は保存しない。保存すると、`s3://`を登録できないサイトになる。
+  // ストレージ接続を読めない接続は保存しない。保存すると、`s3://`にストレージ接続を付けられない
+  // サイトになる。
   private async readStorageConnections(
     client: DataCatalogClient,
   ): Promise<DataCatalogStorageConnection[]> {
