@@ -64,6 +64,8 @@ For versions registered before connecting, set the storage connection here after
 
 Recreating a connection in mado S3 Data Catalog changes the storage connection ID even for the same location. Versions with the old ID show "Storage connection not found" instead of the link. Change them to the new storage connection to bring the link back.
 
+When there are many versions, change them together under **Project settings → S3 storage connections**. It lists which storage connection the `s3://` versions of the project have, per bucket. Press [Set storage connection] or [Change storage connection] on a row to change the dataset versions and model versions of that bucket together.
+
 ## Open S3 locations in mado S3 Data Catalog
 
 Versions registered with a storage connection show [Open in mado S3 Data Catalog] next to the URI. It opens the page of that folder or file in mado S3 Data Catalog in a new tab. Whether you can see the contents depends on your sign-in and permissions in mado S3 Data Catalog.

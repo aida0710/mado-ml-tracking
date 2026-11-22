@@ -40,6 +40,13 @@ export const pluginsText = localized({
   storageConnectionNotFound: 'ストレージ接続が見つかりません',
   setStorageConnection: 'ストレージ接続を設定',
   changeStorageConnection: 'ストレージ接続を変更',
+  projectStorageConnections: 'S3のストレージ接続',
+  projectStorageConnectionsAbout: 'このProjectのデータセットとモデルのS3の場所が、mado S3 Data Catalogのどのストレージ接続にあるかです。バケットごとにまとめて変更できます。',
+  projectStorageConnectionsNotConnected: 'このサイトはmado S3 Data Catalogに接続していません。',
+  projectStorageConnectionsEmpty: 'S3の場所を登録したバージョンはありません。',
+  storageBucket: 'バケット',
+  storageDatasetVersions: 'データセットのバージョン',
+  storageModelVersions: 'モデルのバージョン',
   storageConnections: '使えるストレージ接続',
   noStorageConnections: 'なし（アクセストークンに接続を許可してください）',
 } as const, english.pluginsText);

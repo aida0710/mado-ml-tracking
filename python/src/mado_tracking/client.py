@@ -628,6 +628,38 @@ class Client(ExperimentTasksClient):
             project_id, f"models/{path_id(model_id)}", version_id, storage_connection_id
         )
 
+    def storage_connection_usage(self, project_id: str) -> list[dict[str, Any]]:
+        """``s3://``のバージョンの数を、バケットとストレージ接続ごとに返す。"""
+        usage: list[dict[str, Any]] = self.request(
+            "GET", self.project_path(project_id, "data-catalog/storage-connection-usage")
+        )["items"]
+        return usage
+
+    def reassign_storage_connection(
+        self,
+        project_id: str,
+        *,
+        from_storage_connection_id: str | None,
+        to_storage_connection_id: str | None,
+        bucket: str | None = None,
+    ) -> dict[str, Any]:
+        """``from``のストレージ接続を持つ``s3://``のバージョンを、まとめて``to``へ付け替える。
+
+        ``bucket``を省くと全部のバケットが対象で、そのとき``from``は``None``にできない。
+        付け替えたデータセットとモデルのバージョンの数を返す。
+        """
+        payload: dict[str, Any] = {
+            "fromDataCatalogStorageConnectionId": from_storage_connection_id,
+            "toDataCatalogStorageConnectionId": to_storage_connection_id,
+        }
+        if bucket is not None:
+            payload["bucket"] = bucket
+        return self.request(
+            "POST",
+            self.project_path(project_id, "data-catalog/storage-connection-reassignments"),
+            json=payload,
+        )
+
     def _set_version_storage_connection(
         self, project_id: str, parent_path: str, version_id: str, storage_connection_id: str | None
     ) -> dict[str, Any]:

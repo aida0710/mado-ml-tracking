@@ -5,6 +5,7 @@ import { trainingDataStageCreateSchema } from '../../domain/trainingDataStageVal
 import { modelTrainingSourceCreateSchema } from '../../domain/modelTrainingSourceValidation.js';
 import { dataCatalogConnectionInputSchema } from '../../domain/dataCatalogConnectionValidation.js';
 import { versionStorageConnectionUpdateSchema } from '../../domain/versionStorageConnectionValidation.js';
+import { storageConnectionReassignmentSchema } from '../../domain/storageConnectionReassignmentValidation.js';
 import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
 import * as contract from '@mmt/contracts/schemas';
@@ -3072,6 +3073,24 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: 'mado S3 Data Catalogの画面のURLとストレージ接続（未接続ならurlはnull）',
     access: PROJECT_VIEWER,
     responses: { 200: contract.dataCatalogReferenceSchema },
+  },
+  {
+    method: 'get',
+    path: '/api/projects/:p/data-catalog/storage-connection-usage',
+    tag: 'registry',
+    summary: 's3://のバージョンの数を、バケットとストレージ接続ごとに取得',
+    access: PROJECT_VIEWER,
+    responses: { 200: contract.itemsOf(contract.storageConnectionUsageSchema) },
+  },
+  {
+    method: 'post',
+    path: '/api/projects/:p/data-catalog/storage-connection-reassignments',
+    tag: 'registry',
+    summary: 's3://のバージョンのストレージ接続をまとめて付け替える',
+    access: REGISTRY_WRITE,
+    body: storageConnectionReassignmentSchema,
+    responses: { 200: contract.storageConnectionReassignmentResultSchema },
+    errors: routeError(422, ...STORAGE_CONNECTION_ERROR_CODES),
   },
   {
     method: 'put',

@@ -86,6 +86,7 @@ try {
     assert.deepEqual(await contents.getByRole('link').allTextContents(), [
       'プロジェクト',
       'Artifactの使用量',
+      'S3のストレージ接続',
       'SDK・MLflow 3から接続',
       'Members',
       'Authentik group',

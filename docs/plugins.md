@@ -62,6 +62,15 @@ mado S3 Data Catalogに接続済みのサイトでは、`s3://`のURIを登録�
 - mado S3 Data Catalogで接続を作り直すと、同じ場所でもストレージ接続のIDが変わります。古いIDを持つバージョンは、IDを残したまま「ストレージ接続が見つかりません」と表示し、リンクを出しません。新しいストレージ接続へ直すと、リンクが戻ります。
 - 一覧に無いIDには直せません（422 `data_catalog_storage_connection_unknown`）。
 
+### バケットごとにまとめて変える
+
+プロジェクト設定の「S3のストレージ接続」に、このProjectの`s3://`のバージョンが、バケットごとにどのストレージ接続を持つかが並びます。行の「ストレージ接続を設定」「ストレージ接続を変更」で、その行（バケットと今のストレージ接続の組）のデータセットとモデルのバージョンをまとめて付け替えます。
+
+- 接続したあと: 「未設定」の行で、そのバケットがあるストレージ接続を選びます。
+- mado S3 Data Catalogで接続を作り直したあと: 「ストレージ接続が見つかりません」の行で、新しいストレージ接続を選びます。
+- APIは`POST /api/projects/:p/data-catalog/storage-connection-reassignments`、Python SDKは`reassign_storage_connection`です。`bucket`を省くと、同じIDを持つ全部のバケットのバージョンをまとめて移せます。
+- バケット名からストレージ接続を推測して付けることはしません。選ぶのは人です。
+
 ## S3の場所をmado S3 Data Catalogで開く
 
 ストレージ接続を持つバージョンには、URIの横に「mado S3 Data Catalogで開く」のリンクが出ます。押すと、mado S3 Data Catalogのそのフォルダかファイルの画面が別のタブで開きます。中身を見られるかは、mado S3 Data Catalogのログインと権限で決まります。

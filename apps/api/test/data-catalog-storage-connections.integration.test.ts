@@ -6,6 +6,8 @@ import type {
   DatasetVersion,
   Model,
   ModelVersion,
+  StorageConnectionReassignmentResult,
+  StorageConnectionUsage,
 } from '@mmt/contracts';
 import { DataCatalogApiError, type DataCatalogClient } from '@mmt/platform';
 import { createApplication } from '../src/app.js';
@@ -455,6 +457,143 @@ describe.skipIf(!testDatabaseUrl)('mado S3 Data Catalogのストレージ接続�
       const attached = await entity<ModelVersion>(await setStorageConnection(ON_PREMISES.id), 200);
       expect(attached).toEqual({ ...version, dataCatalogStorageConnectionId: ON_PREMISES.id });
       expect(await entity<ModelVersion>(await setStorageConnection(null), 200)).toEqual(version);
+    });
+  });
+
+  describe('ストレージ接続のまとめての付け替え', () => {
+    const AWS = DATA_CATALOG_STORAGE_CONNECTIONS_FIXTURE[1]!;
+    /** 接続済みのサイトに、バケットの違う`s3://`のバージョンと、`s3://`でないバージョンを置く。 */
+    async function registryWithBuckets(overrides: Partial<DataCatalogClient> = {}) {
+      const registry = await connectedRegistry(overrides);
+      const { fixture, app, registerDatasetVersion } = registry;
+      await entity(await registerDatasetVersion({ version: 'a', uri: 's3://corpus/ja/' }));
+      await entity(await registerDatasetVersion({ version: 'b', uri: 's3://corpus/en/' }));
+      // 名前の前半が同じ別のバケット。
+      await entity(await registerDatasetVersion({ version: 'c', uri: 's3://corpus-2/ja/' }));
+      await entity(await registerDatasetVersion({ version: 'd', uri: 'file:///data' }));
+      const model = await entity<Model>(
+        await request(app, `${fixture.basePath}/models`, {
+          method: 'POST', cookie: fixture.editor.cookie, body: { name: 'Speech', family: 'qwen2' },
+        }),
+      );
+      await entity(
+        await request(app, `${fixture.basePath}/models/${model.id}/versions`, {
+          method: 'POST', cookie: fixture.editor.cookie, body: { version: 'v1', weightsUri: 's3://corpus/model.bin' },
+        }),
+      );
+      const usage = async () =>
+        (
+          await entity<{ items: StorageConnectionUsage[] }>(
+            await request(app, `${fixture.basePath}/data-catalog/storage-connection-usage`, {
+              cookie: fixture.viewer.cookie,
+            }), 200,
+          )
+        ).items;
+      const reassign = (body: Record<string, unknown>, cookie = fixture.editor.cookie) =>
+        request(app, `${fixture.basePath}/data-catalog/storage-connection-reassignments`, {
+          method: 'POST', cookie, body,
+        });
+      return { ...registry, usage, reassign };
+    }
+
+    it('s3://のバージョンを、バケットとストレージ接続ごとに数える', async () => {
+      const { usage } = await registryWithBuckets();
+      expect(await usage()).toEqual([
+        { bucket: 'corpus', dataCatalogStorageConnectionId: null, datasetVersions: 2, modelVersions: 1 },
+        { bucket: 'corpus-2', dataCatalogStorageConnectionId: null, datasetVersions: 1, modelVersions: 0 },
+      ]);
+    });
+
+    it('選んだバケットの未設定のバージョンにだけ付ける。名前の前半が同じ別のバケットには付けない', async () => {
+      const { usage, reassign } = await registryWithBuckets();
+      const result = await entity<StorageConnectionReassignmentResult>(
+        await reassign({
+          bucket: 'corpus', fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: ON_PREMISES.id,
+        }), 200,
+      );
+      expect(result).toEqual({ datasetVersions: 2, modelVersions: 1 });
+      expect(await usage()).toEqual([
+        { bucket: 'corpus', dataCatalogStorageConnectionId: ON_PREMISES.id, datasetVersions: 2, modelVersions: 1 },
+        { bucket: 'corpus-2', dataCatalogStorageConnectionId: null, datasetVersions: 1, modelVersions: 0 },
+      ]);
+    });
+
+    it('一覧に無くなったIDのバージョンを、バケットを選ばずに新しいストレージ接続へ移せる', async () => {
+      let listed = [ON_PREMISES];
+      const { fixture, app, usage, reassign } = await registryWithBuckets({
+        storageConnections: async () => listed,
+      });
+      for (const bucket of ['corpus', 'corpus-2'])
+        await entity(
+          await reassign({
+            bucket, fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: ON_PREMISES.id,
+          }), 200,
+        );
+      // mado S3 Data Catalogで接続を作り直すと、同じ場所でもIDが変わる。
+      listed = [AWS];
+      await entity(
+        await request(app, ADMIN_ENDPOINT, {
+          method: 'PUT', cookie: fixture.administrator.cookie, body: { url: DATA_CATALOG_URL_FIXTURE },
+        }), 200,
+      );
+      const result = await entity<StorageConnectionReassignmentResult>(
+        await reassign({
+          fromDataCatalogStorageConnectionId: ON_PREMISES.id, toDataCatalogStorageConnectionId: AWS.id,
+        }), 200,
+      );
+      expect(result).toEqual({ datasetVersions: 3, modelVersions: 1 });
+      expect((await usage()).map((item) => item.dataCatalogStorageConnectionId)).toEqual([AWS.id, AWS.id]);
+    });
+
+    it('まとめて外せる', async () => {
+      const { usage, reassign } = await registryWithBuckets();
+      await entity(
+        await reassign({
+          bucket: 'corpus', fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: ON_PREMISES.id,
+        }), 200,
+      );
+      await entity(
+        await reassign({ fromDataCatalogStorageConnectionId: ON_PREMISES.id, toDataCatalogStorageConnectionId: null }), 200,
+      );
+      expect((await usage()).every((item) => item.dataCatalogStorageConnectionId === null)).toBe(true);
+    });
+
+    it('一覧に無いIDへは付け替えず、未設定の全バケットへの一括の付与と、変わらない付け替えは断る', async () => {
+      const { usage, reassign } = await registryWithBuckets();
+      const unknown = await reassign({
+        bucket: 'corpus', fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: 'unknown01',
+      });
+      expect(unknown.status).toBe(422);
+      expect(await unknown.json()).toMatchObject({ code: 'data_catalog_storage_connection_unknown' });
+      for (const body of [
+        { fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: ON_PREMISES.id },
+        { bucket: 'corpus', fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: null },
+      ]) {
+        const refused = await reassign(body);
+        expect(refused.status).toBe(422);
+        expect(await refused.json()).toMatchObject({ code: 'invalid_request' });
+      }
+      expect((await usage()).every((item) => item.dataCatalogStorageConnectionId === null)).toBe(true);
+    });
+
+    it('編集できない人には、指定の誤りより先に403を返す。付け替えは監査に件数つきで残る', async () => {
+      const { fixture, reassign } = await registryWithBuckets();
+      const body = {
+        bucket: 'corpus', fromDataCatalogStorageConnectionId: null, toDataCatalogStorageConnectionId: 'unknown01',
+      };
+      expect((await reassign(body, fixture.viewer.cookie)).status).toBe(403);
+      await entity(await reassign({ ...body, toDataCatalogStorageConnectionId: ON_PREMISES.id }), 200);
+      const events = await harness.database.query<{ details: Record<string, unknown> }>(
+        `SELECT details FROM audit_events WHERE action='data_catalog.storage_connection.reassign'
+           AND outcome='success' AND project_id=$1`,
+        [fixture.project.id],
+      );
+      expect(events.rows.map((event) => event.details)).toEqual([
+        {
+          bucket: 'corpus', fromDataCatalogStorageConnectionId: null,
+          toDataCatalogStorageConnectionId: ON_PREMISES.id, datasetVersions: 2, modelVersions: 1,
+        },
+      ]);
     });
   });
 });

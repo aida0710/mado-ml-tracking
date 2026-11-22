@@ -114,6 +114,7 @@ export const auditActionLabels: Record<string, string> = localized({
   'dataset.version.parents.append': 'データセットバージョンの親の追記',
   'dataset.version.storage_connection.set': 'データセットバージョンのストレージ接続の変更',
   'model.version.storage_connection.set': 'モデルバージョンのストレージ接続の変更',
+  'data_catalog.storage_connection.reassign': 'ストレージ接続のまとめての変更',
   'model.training_source.associate': 'モデルの学習元の紐付け',
   'run.training_data_stage.append': '学習データの構成の記録',
   'model_alias.protection.set': 'Aliasの保護の設定',

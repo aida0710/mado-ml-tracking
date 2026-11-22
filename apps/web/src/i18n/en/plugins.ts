@@ -36,6 +36,13 @@ export const pluginsText = {
   storageConnectionNotFound: 'Storage connection not found',
   setStorageConnection: 'Set storage connection',
   changeStorageConnection: 'Change storage connection',
+  projectStorageConnections: 'S3 storage connections',
+  projectStorageConnectionsAbout: 'Which mado S3 Data Catalog storage connection holds the S3 locations of the datasets and models in this project. You can change them per bucket.',
+  projectStorageConnectionsNotConnected: 'This site is not connected to mado S3 Data Catalog.',
+  projectStorageConnectionsEmpty: 'No versions have an S3 location.',
+  storageBucket: 'Bucket',
+  storageDatasetVersions: 'Dataset versions',
+  storageModelVersions: 'Model versions',
   storageConnections: 'Available storage connections',
   noStorageConnections: 'None (allow connections for the access token)',
 } as const;

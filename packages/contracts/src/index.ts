@@ -833,6 +833,31 @@ export interface DataCatalogReference {
   url: string | null;
   storageConnections: DataCatalogStorageConnection[];
 }
+/**
+ * GET /projects/:p/data-catalog/storage-connection-usage の1行。Projectの`s3://`のバージョンを、
+ * バケットと、登録してあるストレージ接続（無ければnull）でまとめた件数。
+ */
+export interface StorageConnectionUsage {
+  bucket: string;
+  dataCatalogStorageConnectionId: string | null;
+  datasetVersions: number;
+  modelVersions: number;
+}
+/**
+ * POST /projects/:p/data-catalog/storage-connection-reassignments。`from`のストレージ接続を持つ
+ * `s3://`のバージョンを、まとめて`to`へ付け替える。`bucket`を省くと全部のバケットが対象で、
+ * そのとき`from`はnullにできない（未設定のバージョンへは、バケットを選んで付ける）。
+ */
+export interface StorageConnectionReassignment {
+  bucket?: string;
+  fromDataCatalogStorageConnectionId: string | null;
+  toDataCatalogStorageConnectionId: string | null;
+}
+/** 付け替えたバージョンの数。 */
+export interface StorageConnectionReassignmentResult {
+  datasetVersions: number;
+  modelVersions: number;
+}
 /** PUT /admin/plugins/data-catalog。accessTokenを省くと、同じURLの保存済みのtokenで確かめ直す。 */
 export interface DataCatalogConnectionInput {
   url: string;

@@ -183,12 +183,36 @@ export class DataCatalogConnectionService {
           ? 'dataCatalogStorageConnectionId applies only to an s3:// URI'
           : 'dataCatalogStorageConnectionId cannot be set because this site is not connected to mado S3 Data Catalog',
       });
+    await this.requireListedStorageConnection(saved, storageConnectionId);
+    return storageConnectionId;
+  }
+
+  /**
+   * まとめての付け替えで、付け替える先のストレージ接続を確かめる。対象は`s3://`のバージョンだけ
+   * なので、URIの形は見ない。未接続のサイトでは指定できず、一覧に無いIDは受け付けない。
+   */
+  async requireAssignableStorageConnection(storageConnectionId: string): Promise<void> {
+    const saved = await findDataCatalogConnection(this.database);
+    if (!saved)
+      throw new DomainError({
+        status: 422,
+        code: 'data_catalog_storage_connection_not_applicable',
+        message:
+          'dataCatalogStorageConnectionId cannot be set because this site is not connected to mado S3 Data Catalog',
+      });
+    await this.requireListedStorageConnection(saved, storageConnectionId);
+  }
+
+  private async requireListedStorageConnection(
+    saved: DataCatalogConnectionRow,
+    storageConnectionId: string,
+  ): Promise<void> {
     const isKnown = (storageConnections: DataCatalogStorageConnection[]) =>
       storageConnections.some((storageConnection) => storageConnection.id === storageConnectionId);
     // 接続を確かめたあとにmado S3 Data Catalogで足されたストレージ接続かもしれない。知らないIDの
     // ときだけ読み直す。
     if (isKnown(saved.storageConnections) || isKnown(await this.reloadStorageConnections(saved)))
-      return storageConnectionId;
+      return;
     throw new DomainError({
       status: 422,
       code: 'data_catalog_storage_connection_unknown',

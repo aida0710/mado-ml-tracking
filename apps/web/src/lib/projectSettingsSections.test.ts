@@ -13,6 +13,7 @@ describe('プロジェクト設定の目次', () => {
     expect(ids).toEqual([
       'settings-project',
       'settings-usage',
+      'settings-storage-connections',
       'settings-connection',
       'settings-members',
       'settings-groups',
