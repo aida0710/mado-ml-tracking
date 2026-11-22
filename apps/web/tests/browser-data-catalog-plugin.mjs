@@ -224,6 +224,11 @@ try {
     '未設定', 'on-premises (onprem)', 'AWS (aws)', 'ストレージ接続が見つかりません (removed01)',
   ]);
   await screenshot('dataset-storage-connection-change-ja');
+  // 幅が変わると表は描き直される。開いたダイアログと選んだ値は残る。
+  const wideViewport = page.viewportSize();
+  await page.setViewportSize({ width: 520, height: 900 });
+  await page.setViewportSize(wideViewport);
+  assert.equal(await editedStorageConnection.inputValue(), 'removed01');
   await editedStorageConnection.selectOption('aws01');
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
