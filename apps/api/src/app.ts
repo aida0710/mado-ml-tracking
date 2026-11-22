@@ -186,6 +186,8 @@ import { serviceAccountRoutes } from './routes/serviceAccountRoutes.js';
 import { dataCatalogPluginRoutes } from './routes/dataCatalogPluginRoutes.js';
 import { dataCatalogStorageRoutes } from './routes/dataCatalogStorageRoutes.js';
 import { versionStorageConnectionRoutes } from './routes/versionStorageConnectionRoutes.js';
+import { storageConnectionReassignmentRoutes } from './routes/storageConnectionReassignmentRoutes.js';
+import { StorageConnectionReassignmentService } from './services/storageConnectionReassignmentService.js';
 import { VersionStorageConnectionService } from './services/versionStorageConnectionService.js';
 import { evaluationRoutes } from './routes/evaluationRoutes.js';
 import { modelEvaluationRoutes } from './routes/modelEvaluationRoutes.js';
@@ -530,6 +532,12 @@ export function createApplication(options: ApplicationOptions) {
   );
   app.route('/api/projects', modelAutomationRoutes(automation));
   app.route('/api/projects', dataCatalogStorageRoutes(dataCatalogConnection));
+  app.route(
+    '/api/projects',
+    storageConnectionReassignmentRoutes(
+      new StorageConnectionReassignmentService(database, dataCatalogConnection),
+    ),
+  );
   app.route(
     '/api/projects',
     versionStorageConnectionRoutes(

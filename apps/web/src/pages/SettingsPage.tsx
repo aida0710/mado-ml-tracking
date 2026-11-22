@@ -8,6 +8,7 @@ import { useShowsExecutionScreens } from '../hooks/useShowsExecutionScreens';
 import { PageHeader } from '../components/PageHeader';
 import { ProjectSettings } from '../components/ProjectSettings';
 import { ArtifactUsageSummary } from '../components/ArtifactUsageSummary';
+import { ProjectStorageConnections } from '../components/ProjectStorageConnections';
 import { RecordingConnectionGuide } from '../components/RecordingConnectionGuide';
 import { ProjectMembers } from '../components/ProjectMembers';
 import { ProjectGroupBindings } from '../components/ProjectGroupBindings';
@@ -31,7 +32,7 @@ import { text } from '../i18n/catalog';
  */
 export function SettingsPage() {
   useLocale();
-  const { project, isProjectAdmin } = useProject();
+  const { project, isProjectAdmin, canEdit } = useProject();
   const showsExecutionScreens = useShowsExecutionScreens(project.id);
   // APIはProject adminでない人を拒むので、その人は監査ログを要求しない。
   const audit = useAuditEvents(isProjectAdmin ? { projectId: project.id } : null);
@@ -70,6 +71,9 @@ export function SettingsPage() {
         </div>
       </div>
       <div className="settings-stack">
+        <div id={sectionIds.storageConnections} className="settings-anchor">
+          <ProjectStorageConnections projectId={project.id} canEdit={canEdit} />
+        </div>
         <div id={sectionIds.connection} className="settings-anchor">
           <RecordingConnectionGuide onTokenCreated={reloadTokenLists} />
         </div>

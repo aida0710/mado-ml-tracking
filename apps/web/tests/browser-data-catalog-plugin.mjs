@@ -269,6 +269,58 @@ try {
   datasetVersion.dataCatalogStorageConnectionId = null;
   await page.reload();
 
+  console.log('Project settings: storage connections are listed per bucket and changed together');
+  const [modelVersion] = api.state.modelVersions;
+  modelVersion.weightsUri = 's3://corpus/models/v1.bin';
+  modelVersion.dataCatalogStorageConnectionId = null;
+  datasetVersion.dataCatalogStorageConnectionId = null;
+  await page.goto(`${base}/projects/${projectId}/settings`);
+  const storageSection = page.locator('section.settings-section', {
+    has: page.getByRole('heading', { name: 'S3のストレージ接続', exact: true }),
+  });
+  const bucketRow = storageSection.getByRole('row').filter({ hasText: 'corpus' });
+  await bucketRow.getByText('未設定', { exact: true }).waitFor();
+  await screenshot('project-storage-connections-unset-ja');
+  await bucketRow.getByRole('button', { name: 'ストレージ接続を設定', exact: true }).click();
+  await dialog().getByLabel('ストレージ接続', { exact: false }).selectOption('onprem01');
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  const reassignments = () =>
+    api.state.calls.filter((call) => call.path.endsWith('/storage-connection-reassignments'));
+  assert.deepEqual(reassignments().at(-1).body, {
+    bucket: 'corpus',
+    fromDataCatalogStorageConnectionId: null,
+    toDataCatalogStorageConnectionId: 'onprem01',
+  });
+  await bucketRow.getByText('on-premises (onprem)', { exact: true }).waitFor();
+  assert.equal(datasetVersion.dataCatalogStorageConnectionId, 'onprem01');
+  assert.equal(modelVersion.dataCatalogStorageConnectionId, 'onprem01');
+  // mado S3 Data Catalogで接続を作り直したあとは、古いIDが見つからないと出て、新しい接続へ移せる。
+  datasetVersion.dataCatalogStorageConnectionId = 'removed01';
+  modelVersion.dataCatalogStorageConnectionId = 'removed01';
+  await page.reload();
+  await bucketRow.getByText('ストレージ接続が見つかりません', { exact: true }).waitFor();
+  await screenshot('project-storage-connections-missing-ja');
+  await bucketRow.getByRole('button', { name: 'ストレージ接続を変更', exact: true }).click();
+  await dialog().getByLabel('ストレージ接続', { exact: false }).selectOption('aws01');
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  assert.deepEqual(reassignments().at(-1).body, {
+    bucket: 'corpus',
+    fromDataCatalogStorageConnectionId: 'removed01',
+    toDataCatalogStorageConnectionId: 'aws01',
+  });
+  await bucketRow.getByText('AWS (aws)', { exact: true }).waitFor();
+  api.state.project.role = 'viewer';
+  await page.reload();
+  await bucketRow.getByText('AWS (aws)', { exact: true }).waitFor();
+  assert.equal(await storageSection.getByRole('button').count(), 0);
+  api.state.project.role = 'admin';
+  modelVersion.weightsUri = null;
+  modelVersion.dataCatalogStorageConnectionId = null;
+  datasetVersion.dataCatalogStorageConnectionId = null;
+  await page.goto(`${base}/projects/${projectId}/datasets`);
+
   console.log('Registration: an s3:// URI offers a storage connection, and it is optional');
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
   const uriField = dialog().getByLabel('URI', { exact: false }).first();

@@ -4,6 +4,7 @@ import {
   createDataCatalogState,
   routeDataCatalogPlugin,
   routeDataCatalogReference,
+  routeStorageConnectionReassignment,
 } from './dataCatalogPluginMock.mjs';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
@@ -425,6 +426,12 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     if (dataCatalogAnswer) return dataCatalogAnswer;
     const dataCatalogReferenceAnswer = routeDataCatalogReference({ state, request: { path, method }, reply });
     if (dataCatalogReferenceAnswer) return dataCatalogReferenceAnswer;
+    const storageConnectionAnswer = routeStorageConnectionReassignment({
+      state,
+      request: { path, method, body },
+      reply,
+    });
+    if (storageConnectionAnswer) return storageConnectionAnswer;
     if (path === '/storage/backends')
       return reply({ items: ['filesystem', 's3'], defaultBackend: 'filesystem' });
     const projectAnswer = projectAdministration.handle({

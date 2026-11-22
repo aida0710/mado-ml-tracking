@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import type { DataCatalogPlugin, DataCatalogReference, LineageGraph } from '../index.js';
+import type {
+  DataCatalogPlugin,
+  DataCatalogReference,
+  LineageGraph,
+  StorageConnectionReassignmentResult,
+  StorageConnectionUsage,
+} from '../index.js';
 import { timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
@@ -22,6 +28,19 @@ export const dataCatalogReferenceSchema = namedContractSchema(
     url: z.string().nullable(),
     storageConnections: z.array(dataCatalogStorageConnectionSchema),
   }),
+);
+export const storageConnectionUsageSchema = namedContractSchema(
+  'StorageConnectionUsage',
+  z.strictObject({
+    bucket: z.string(),
+    dataCatalogStorageConnectionId: z.string().nullable(),
+    datasetVersions: z.number().int(),
+    modelVersions: z.number().int(),
+  }),
+);
+export const storageConnectionReassignmentResultSchema = namedContractSchema(
+  'StorageConnectionReassignmentResult',
+  z.strictObject({ datasetVersions: z.number().int(), modelVersions: z.number().int() }),
 );
 export const dataCatalogConnectionSchema = namedContractSchema(
   'DataCatalogConnection',
@@ -61,6 +80,15 @@ export const lineageGraphSchema = namedContractSchema(
 
 type _DataCatalogPlugin = Expect<
   MutuallyAssignable<z.infer<typeof dataCatalogPluginSchema>, DataCatalogPlugin>
+>;
+type _StorageConnectionUsage = Expect<
+  MutuallyAssignable<z.infer<typeof storageConnectionUsageSchema>, StorageConnectionUsage>
+>;
+type _StorageConnectionReassignmentResult = Expect<
+  MutuallyAssignable<
+    z.infer<typeof storageConnectionReassignmentResultSchema>,
+    StorageConnectionReassignmentResult
+  >
 >;
 type _DataCatalogReference = Expect<
   MutuallyAssignable<z.infer<typeof dataCatalogReferenceSchema>, DataCatalogReference>

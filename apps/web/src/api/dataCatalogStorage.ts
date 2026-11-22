@@ -1,8 +1,12 @@
 import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { StorageConnectionReassignment } from '@mmt/contracts';
 import {
   dataCatalogReferenceSchema,
   datasetVersionSchema,
+  itemsOf,
   modelVersionSchema,
+  storageConnectionReassignmentResultSchema,
+  storageConnectionUsageSchema,
 } from '@mmt/contracts/schemas';
 
 /** `datasets`か`models`の下の、1つのバージョン。`parentId`はDatasetかModelのID。 */
@@ -23,6 +27,18 @@ export const dataCatalogStorageApi = {
     requestJson(`/api/projects/${projectId}/data-catalog`, {
       schema: dataCatalogReferenceSchema,
       init: { signal },
+    }),
+  /** Projectの`s3://`のバージョンの数。バケットとストレージ接続ごと。 */
+  storageConnectionUsage: (projectId: string, signal?: AbortSignal) =>
+    requestJson(`/api/projects/${projectId}/data-catalog/storage-connection-usage`, {
+      schema: itemsOf(storageConnectionUsageSchema),
+      init: { signal },
+    }),
+  /** `from`のストレージ接続を持つ`s3://`のバージョンを、まとめて`to`へ付け替える。 */
+  reassignStorageConnection: (projectId: string, reassignment: StorageConnectionReassignment) =>
+    requestJson(`/api/projects/${projectId}/data-catalog/storage-connection-reassignments`, {
+      schema: storageConnectionReassignmentResultSchema,
+      init: jsonRequestInit('POST', reassignment),
     }),
   /** 登録済みのバージョンのストレージ接続を付ける・直す。nullで外す。 */
   setDatasetVersionStorageConnection: (

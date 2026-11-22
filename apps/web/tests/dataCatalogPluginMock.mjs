@@ -91,3 +91,51 @@ export function routeDataCatalogReference({ state, request, reply }) {
     storageConnections: connection?.storageConnections ?? [],
   });
 }
+
+const STORAGE_CONNECTION_USAGE_PATH_PATTERN = /^\/projects\/[^/]+\/data-catalog\/storage-connection-usage$/;
+const STORAGE_CONNECTION_REASSIGNMENT_PATH_PATTERN =
+  /^\/projects\/[^/]+\/data-catalog\/storage-connection-reassignments$/;
+const S3_BUCKET_PATTERN = /^s3:\/\/([^/]+)/;
+
+/** `s3://`のバージョン。URIの項目は、データセットが`uri`、モデルが`weightsUri`。 */
+function s3Versions(state) {
+  return [
+    ...state.datasetVersions.map((version) => ({ version, uri: version.uri, countKey: 'datasetVersions' })),
+    ...state.modelVersions.map((version) => ({ version, uri: version.weightsUri, countKey: 'modelVersions' })),
+  ].flatMap((entry) => {
+    const bucket = S3_BUCKET_PATTERN.exec(entry.uri ?? '')?.[1];
+    return bucket ? [{ ...entry, bucket }] : [];
+  });
+}
+
+/**
+ * Projectの`s3://`のバージョンのストレージ接続を、バケットごとに数えて、まとめて付け替える。
+ * この経路でなければundefinedを返す。
+ */
+export function routeStorageConnectionReassignment({ state, request, reply }) {
+  if (STORAGE_CONNECTION_USAGE_PATH_PATTERN.test(request.path) && request.method === 'GET') {
+    const usage = new Map();
+    for (const { version, bucket, countKey } of s3Versions(state)) {
+      const storageConnectionId = version.dataCatalogStorageConnectionId ?? null;
+      const key = `${bucket}\n${storageConnectionId ?? ''}`;
+      const counted = usage.get(key) ?? {
+        bucket, dataCatalogStorageConnectionId: storageConnectionId, datasetVersions: 0, modelVersions: 0,
+      };
+      counted[countKey] += 1;
+      usage.set(key, counted);
+    }
+    return reply({ items: [...usage.values()] });
+  }
+  if (STORAGE_CONNECTION_REASSIGNMENT_PATH_PATTERN.test(request.path) && request.method === 'POST') {
+    const { bucket, fromDataCatalogStorageConnectionId, toDataCatalogStorageConnectionId } = request.body;
+    const result = { datasetVersions: 0, modelVersions: 0 };
+    for (const { version, bucket: versionBucket, countKey } of s3Versions(state)) {
+      if (bucket !== undefined && bucket !== versionBucket) continue;
+      if ((version.dataCatalogStorageConnectionId ?? null) !== fromDataCatalogStorageConnectionId) continue;
+      version.dataCatalogStorageConnectionId = toDataCatalogStorageConnectionId;
+      result[countKey] += 1;
+    }
+    return reply(result);
+  }
+  return undefined;
+}

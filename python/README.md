@@ -308,6 +308,14 @@ client.set_model_version_storage_connection(
 )
 ```
 
+バージョンが多いときは、バケットごとにまとめて付け替える。`storage_connection_usage`は、`s3://`のバージョンの数をバケットとストレージ接続ごとに返す。
+
+```python
+client.reassign_storage_connection(
+    project_id, bucket="corpus", from_storage_connection_id=None, to_storage_connection_id=storage["id"]
+)
+```
+
 ### ディレクトリからデータセットバージョンを作る
 
 `register_dataset(..., files="data/speech")`はディレクトリの中身をArtifactsとして送り、APIがuriとdigestを決める。`files`を使うときは`uri`、`digest`、`data_catalog_storage_connection_id`、`source_run_id`、`parent_dataset_version_ids`を指定しない。既存のDatasetへバージョンを足すだけなら、同じ処理を`upload_dataset_directory`で直接呼べる。

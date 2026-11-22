@@ -527,6 +527,39 @@ def test_storage_connection_of_a_registered_version_is_set_and_removed():
     ]
 
 
+def test_storage_connections_are_counted_and_reassigned_together():
+    client, requests = recording_client(
+        lambda request: httpx.Response(200, json={"items": []} if request.method == "GET" else {})
+    )
+    with client:
+        assert client.storage_connection_usage(PROJECT) == []
+        client.reassign_storage_connection(
+            PROJECT, bucket="corpus", from_storage_connection_id=None, to_storage_connection_id="onprem01"
+        )
+        client.reassign_storage_connection(
+            PROJECT, from_storage_connection_id="old01", to_storage_connection_id="onprem01"
+        )
+    assert requests == [
+        ("GET", f"{PROJECT_PATH}/data-catalog/storage-connection-usage", {}, None),
+        (
+            "POST",
+            f"{PROJECT_PATH}/data-catalog/storage-connection-reassignments",
+            {},
+            {
+                "fromDataCatalogStorageConnectionId": None,
+                "toDataCatalogStorageConnectionId": "onprem01",
+                "bucket": "corpus",
+            },
+        ),
+        (
+            "POST",
+            f"{PROJECT_PATH}/data-catalog/storage-connection-reassignments",
+            {},
+            {"fromDataCatalogStorageConnectionId": "old01", "toDataCatalogStorageConnectionId": "onprem01"},
+        ),
+    ]
+
+
 def test_dataset_files_cannot_be_combined_with_a_reference_uri(tmp_path):
     client, requests = recording_client()
     with client:

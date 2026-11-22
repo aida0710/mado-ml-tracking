@@ -1,9 +1,11 @@
 import { text } from '../i18n/catalog';
+import { pluginsText } from '../i18n/plugins';
 
 /** Projectの設定ページの各部分の要素id。ページとその目次の両方が読む。 */
 export const PROJECT_SETTINGS_SECTION_IDS = {
   project: 'settings-project',
   usage: 'settings-usage',
+  storageConnections: 'settings-storage-connections',
   connection: 'settings-connection',
   members: 'settings-members',
   groups: 'settings-groups',
@@ -27,6 +29,7 @@ const ids = PROJECT_SETTINGS_SECTION_IDS;
 const getSections = (): (ProjectSettingsSection & { isAdminOnly: boolean })[] => [
   { id: ids.project, label: text.project, isAdminOnly: false },
   { id: ids.usage, label: text.artifactUsage, isAdminOnly: false },
+  { id: ids.storageConnections, label: pluginsText.projectStorageConnections, isAdminOnly: false },
   { id: ids.connection, label: text.recordingConnection, isAdminOnly: false },
   { id: ids.members, label: text.members, isAdminOnly: false },
   { id: ids.groups, label: text.groupBindings, isAdminOnly: false },
