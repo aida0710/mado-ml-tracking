@@ -13,7 +13,7 @@ Once connected, you can:
 - change a mado S3 Data Catalog page URL to an `s3://` URI and storage connection when registering (anyone who can edit the project)
 - see, on this page, the storage capacity that mado S3 Data Catalog measures (global administrators)
 
-A **storage connection** is one of the S3 endpoints registered in mado S3 Data Catalog (on-premises S3, AWS, and so on). Once connected, registering an `s3://` location asks which storage connection holds it.
+A **storage connection** is one of the S3 endpoints registered in mado S3 Data Catalog (on-premises S3, AWS, and so on). Once connected, you can choose which storage connection holds an `s3://` location when registering it.
 
 Only global administrators can open this page. mado S3 Data Catalog v0.6.1 or later is required.
 
@@ -42,21 +42,33 @@ If the connection fails, see [Troubleshooting](/en/reference/troubleshooting#plu
 
 ## Choose a storage connection when registering
 
-On a connected site, registering an `s3://` URI requires choosing a storage connection. Registration is refused without one.
+On a connected site, you can choose a storage connection when registering an `s3://` URI. Registration works without one, and you can set it later.
 
 - **Web**: enter an `s3://` URI when creating a dataset version or a model version, and the "Storage connection" field appears.
-- **Python SDK**: pass `data_catalog_storage_connection_id` to `register_dataset` or `register_model`. Look the ID up in `storageConnections` of `client.data_catalog(project_id)`. SDKs up to v0.5.4 do not have this argument and cannot register `s3://` URIs on a connected site; update the SDK.
+- **Python SDK**: pass `data_catalog_storage_connection_id` to `register_dataset` or `register_model`. Look the ID up in `storageConnections` of `client.data_catalog(project_id)`. SDKs up to v0.5.4 do not have this argument. Registration works, and the storage connection is left unset.
 - **API**: set `dataCatalogStorageConnectionId` in the body. Look the ID up with `GET /api/projects/:p/data-catalog`.
 
 You can choose the storage connections allowed for the access token. After adding a storage connection in mado S3 Data Catalog, allow it for the token and press [Check connection].
 
 A storage connection only decides where the link goes. Which S3 a compute target reads is still decided by the environment variables on the target. `file://` and `https://` URIs, versions created from a folder, and versions created by job outputs or MLflow have no storage connection.
 
+## Set or change a storage connection later
+
+You can set the storage connection of a registered version later, change it to another one, or remove it. Anyone who can edit the project can do this. Only the storage connection changes; the URI and digest stay the same.
+
+- **Web**: press [Set storage connection] ([Change storage connection] when one is set) next to the URI of a dataset version or model version and choose one. Choosing "Not set" removes it.
+- **Python SDK**: use `set_dataset_version_storage_connection` or `set_model_version_storage_connection`.
+- **API**: send `{"dataCatalogStorageConnectionId": "<ID>"}` to `PUT /api/projects/:p/datasets/:d/versions/:v/data-catalog-storage-connection` (`models/:m` for models). `null` removes it.
+
+For versions registered before connecting, set the storage connection here after connecting.
+
+Recreating a connection in mado S3 Data Catalog changes the storage connection ID even for the same location. Versions with the old ID show "Storage connection not found" instead of the link. Change them to the new storage connection to bring the link back.
+
 ## Open S3 locations in mado S3 Data Catalog
 
 Versions registered with a storage connection show [Open in mado S3 Data Catalog] next to the URI. It opens the page of that folder or file in mado S3 Data Catalog in a new tab. Whether you can see the contents depends on your sign-in and permissions in mado S3 Data Catalog.
 
-Versions without a storage connection (registered before connecting, job outputs, and so on) do not show the link. It also disappears when the connection is removed or the storage connection is no longer allowed for the access token.
+Versions without a storage connection (registered before connecting or without choosing one, job outputs, and so on) do not show the link. It also disappears when the connection is removed or the storage connection is no longer allowed for the access token.
 
 A URI that ends with `/` opens as a folder; any other URI opens as a file.
 

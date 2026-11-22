@@ -1,6 +1,6 @@
 import type { Artifact, DataCatalogReference, RunKind } from '@mmt/contracts';
 import type { CreateModelVersion } from '../api/inputs';
-import { needsStorageConnection } from './dataCatalogStorage';
+import { acceptsStorageConnection } from './dataCatalogStorage';
 import { parseJsonObject } from './formValues';
 import { text } from '../i18n/catalog';
 
@@ -71,8 +71,8 @@ export function buildModelVersionInput(
     ...(draft.sourceRunId ? { sourceRunId: draft.sourceRunId } : {}),
     ...(draft.weightsArtifact ? { artifactId: draft.weightsArtifact.id } : {}),
     ...(weightsUri ? { weightsUri } : {}),
-    // URIをs3://でないものに変えたあとに残った選択は送らない。
-    ...(needsStorageConnection(dataCatalog, weightsUri)
+    // 未設定と、URIをs3://でないものに変えたあとに残った選択は送らない。
+    ...(acceptsStorageConnection(dataCatalog, weightsUri) && draft.storageConnectionId
       ? { dataCatalogStorageConnectionId: draft.storageConnectionId }
       : {}),
     ...(draft.defaultCodeVersionId ? { defaultCodeVersionId: draft.defaultCodeVersionId } : {}),

@@ -35,8 +35,11 @@ export const pluginsText = localized({
   storageUrlIsDataCatalog: 'これはmado S3 Data Catalogの画面のURLです。S3のURIとストレージ接続に直せます:',
   useS3Uri: 'S3のURIに直す',
   storageConnection: 'ストレージ接続',
-  storageConnectionHint: 'このS3の場所がある、mado S3 Data Catalogのストレージ接続です。mado S3 Data Catalogで開くリンクの行き先を決めます。実行先が読むS3は変わりません。',
-  chooseStorageConnection: '選んでください',
+  storageConnectionHint: 'このS3の場所がある、mado S3 Data Catalogのストレージ接続です。mado S3 Data Catalogで開くリンクの行き先を決めます。実行先が読むS3は変わりません。あとから設定・変更できます。',
+  noStorageConnection: '未設定',
+  storageConnectionNotFound: 'ストレージ接続が見つかりません',
+  setStorageConnection: 'ストレージ接続を設定',
+  changeStorageConnection: 'ストレージ接続を変更',
   storageConnections: '使えるストレージ接続',
   noStorageConnections: 'なし（アクセストークンに接続を許可してください）',
 } as const, english.pluginsText);

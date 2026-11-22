@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
+import { dataCatalogStorageApi } from '../api/dataCatalogStorage';
 import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
 import { useProject } from '../hooks/useProject';
@@ -204,6 +205,22 @@ export function DatasetsPage() {
                                   uri={version.uri}
                                   storageConnectionId={version.dataCatalogStorageConnectionId}
                                   dataCatalog={dataCatalog}
+                                  edit={
+                                    canEdit
+                                      ? {
+                                          save: (storageConnectionId) =>
+                                            dataCatalogStorageApi.setDatasetVersionStorageConnection(
+                                              {
+                                                projectId: project.id,
+                                                parentId: version.datasetId,
+                                                versionId: version.id,
+                                              },
+                                              storageConnectionId,
+                                            ),
+                                          onSaved: registry.reload,
+                                        }
+                                      : undefined
+                                  }
                                 />
                               ),
                             },

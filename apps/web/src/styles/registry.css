@@ -327,3 +327,10 @@ th.alias-version-change {
   font-size: var(--font-size-sm);
   white-space: nowrap;
 }
+
+/* 登録してあるストレージ接続が、今のmado S3 Data Catalogの一覧に無いときの知らせ。 */
+.storage-uri-missing {
+  color: var(--warning);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}

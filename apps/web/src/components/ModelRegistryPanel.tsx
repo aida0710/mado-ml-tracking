@@ -26,6 +26,7 @@ import { promotionTextTemplates } from '../i18n/promotion';
 import { formatList } from '../i18n/textJoining';
 import { lineageText } from '../i18n/lineage';
 import { StorageUri } from './StorageUri';
+import { dataCatalogStorageApi } from '../api/dataCatalogStorage';
 import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { lineageFocusPath } from '../lib/lineageFocus';
 
@@ -52,6 +53,14 @@ export function ModelRegistryPanel({
   // パネルを開くたびに取り直し、保護aliasのタブで足した保護がここにも出るようにする。
   const { reference: dataCatalog } = useDataCatalogReference(projectId);
   const protections = useModelAliasProtections(projectId, registry.selected?.id ?? null);
+  const setSelectedVersionStorageConnection = (storageConnectionId: string | null) => {
+    const version = registry.selectedVersion;
+    if (!version) return Promise.resolve();
+    return dataCatalogStorageApi.setModelVersionStorageConnection(
+      { projectId, parentId: version.modelId, versionId: version.id },
+      storageConnectionId,
+    );
+  };
   const protectionOf = (alias: string) =>
     registry.selected
       ? effectiveAliasProtection(protections.value ?? [], { modelId: registry.selected.id, alias })
@@ -234,6 +243,14 @@ export function ModelRegistryPanel({
                                     registry.selectedVersion.dataCatalogStorageConnectionId
                                   }
                                   dataCatalog={dataCatalog}
+                                  edit={
+                                    canEdit
+                                      ? {
+                                          save: setSelectedVersionStorageConnection,
+                                          onSaved: registry.reload,
+                                        }
+                                      : undefined
+                                  }
                                 />
                               ) : null,
                             ],

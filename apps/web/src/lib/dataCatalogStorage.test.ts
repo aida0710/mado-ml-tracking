@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { DataCatalogReference } from '@mmt/contracts';
-import { dataCatalogStorageUrlOf, needsStorageConnection } from './dataCatalogStorage';
+import {
+  acceptsStorageConnection,
+  dataCatalogStorageUrlOf,
+  isStorageConnectionMissing,
+  storageConnectionOptions,
+} from './dataCatalogStorage';
 
 const reference: DataCatalogReference = {
   url: 'https://catalog.example.test',
@@ -23,10 +28,38 @@ describe('dataCatalogStorageUrlOf', () => {
   });
 });
 
-describe('needsStorageConnection', () => {
+describe('acceptsStorageConnection', () => {
   it('接続済みでURIがs3://のときだけ、ストレージ接続を選ぶ必要がある', () => {
-    expect(needsStorageConnection(reference, ' s3://corpus/ja/ ')).toBe(true);
-    expect(needsStorageConnection(reference, 'https://example.test/data.tar')).toBe(false);
-    expect(needsStorageConnection(notConnected, 's3://corpus/ja/')).toBe(false);
+    expect(acceptsStorageConnection(reference, ' s3://corpus/ja/ ')).toBe(true);
+    expect(acceptsStorageConnection(reference, 'https://example.test/data.tar')).toBe(false);
+    expect(acceptsStorageConnection(notConnected, 's3://corpus/ja/')).toBe(false);
+  });
+});
+
+describe('storageConnectionOptions', () => {
+  const texts = { unset: '未設定', notFound: '見つかりません' };
+
+  it('先頭が未設定で、続けて一覧のストレージ接続を名前と種類で並べる', () => {
+    expect(storageConnectionOptions(reference.storageConnections, texts)[0]).toEqual({
+      value: '',
+      label: '未設定',
+    });
+    expect(storageConnectionOptions(reference.storageConnections, texts)).toHaveLength(
+      reference.storageConnections.length + 1,
+    );
+  });
+
+  it('今のIDが一覧に無ければ、見つからない接続として選択肢に残す', () => {
+    const options = storageConnectionOptions(reference.storageConnections, texts, 'gone01');
+    expect(options.at(-1)).toEqual({ value: 'gone01', label: '見つかりません (gone01)' });
+  });
+});
+
+describe('isStorageConnectionMissing', () => {
+  it('接続済みで、登録してあるIDが一覧に無いときだけ真', () => {
+    expect(isStorageConnectionMissing(reference, 'gone01')).toBe(true);
+    expect(isStorageConnectionMissing(reference, reference.storageConnections[0]!.id)).toBe(false);
+    expect(isStorageConnectionMissing(reference, null)).toBe(false);
+    expect(isStorageConnectionMissing(notConnected, 'gone01')).toBe(false);
   });
 });

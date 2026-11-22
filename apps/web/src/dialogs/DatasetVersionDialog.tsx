@@ -15,7 +15,7 @@ import {
   getOptionalValue,
   getSelectedValues,
 } from '../lib/formValues';
-import { needsStorageConnection, storageConnectionLabel } from '../lib/dataCatalogStorage';
+import { acceptsStorageConnection, storageConnectionOptions } from '../lib/dataCatalogStorage';
 import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { useLocale } from '../i18n/useLocale';
 import { pluginsText } from '../i18n/plugins';
@@ -87,16 +87,13 @@ export function DatasetVersionDialog({
                 name: 'storageConnectionId',
                 label: pluginsText.storageConnection,
                 type: 'select',
-                required: true,
-                options: [
-                  { value: '', label: pluginsText.chooseStorageConnection },
-                  ...dataCatalog.storageConnections.map((storageConnection) => ({
-                    value: storageConnection.id,
-                    label: storageConnectionLabel(storageConnection),
-                  })),
-                ],
+                options: storageConnectionOptions(dataCatalog.storageConnections, {
+                  unset: pluginsText.noStorageConnection,
+                  notFound: pluginsText.storageConnectionNotFound,
+                }),
                 hint: pluginsText.storageConnectionHint,
-                visible: (values) => needsStorageConnection(dataCatalog, getFieldValue(values, 'uri')),
+                visible: (values) =>
+                  acceptsStorageConnection(dataCatalog, getFieldValue(values, 'uri')),
               },
               {
                 name: 'digest',
@@ -127,8 +124,9 @@ export function DatasetVersionDialog({
               registryApi.createDatasetVersion(project.id, dataset.id, {
                 version: getFieldValue(values, 'version'),
                 uri: getFieldValue(values, 'uri'),
-                // URIをs3://でないものに変えたあとに残った選択は送らない。
-                ...(needsStorageConnection(dataCatalog, getFieldValue(values, 'uri'))
+                // 未設定と、URIをs3://でないものに変えたあとに残った選択は送らない。
+                ...(acceptsStorageConnection(dataCatalog, getFieldValue(values, 'uri')) &&
+                getFieldValue(values, 'storageConnectionId')
                   ? { dataCatalogStorageConnectionId: getFieldValue(values, 'storageConnectionId') }
                   : {}),
                 digest: getFieldValue(values, 'digest'),
