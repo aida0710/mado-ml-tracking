@@ -502,6 +502,31 @@ def test_data_catalog_reads_the_storage_connections_of_the_project():
     assert requests == [("GET", f"{PROJECT_PATH}/data-catalog", {}, None)]
 
 
+def test_storage_connection_of_a_registered_version_is_set_and_removed():
+    client, requests = recording_client(lambda _request: httpx.Response(200, json={"id": "version"}))
+    with client:
+        client.set_dataset_version_storage_connection(
+            PROJECT, dataset_id="d", version_id="v", storage_connection_id="onprem01"
+        )
+        client.set_model_version_storage_connection(
+            PROJECT, model_id="m", version_id="v", storage_connection_id=None
+        )
+    assert requests == [
+        (
+            "PUT",
+            f"{PROJECT_PATH}/datasets/d/versions/v/data-catalog-storage-connection",
+            {},
+            {"dataCatalogStorageConnectionId": "onprem01"},
+        ),
+        (
+            "PUT",
+            f"{PROJECT_PATH}/models/m/versions/v/data-catalog-storage-connection",
+            {},
+            {"dataCatalogStorageConnectionId": None},
+        ),
+    ]
+
+
 def test_dataset_files_cannot_be_combined_with_a_reference_uri(tmp_path):
     client, requests = recording_client()
     with client:

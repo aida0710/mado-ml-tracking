@@ -4,6 +4,7 @@ import { lineageRelationCreateSchema } from '../../domain/lineageRelationValidat
 import { trainingDataStageCreateSchema } from '../../domain/trainingDataStageValidation.js';
 import { modelTrainingSourceCreateSchema } from '../../domain/modelTrainingSourceValidation.js';
 import { dataCatalogConnectionInputSchema } from '../../domain/dataCatalogConnectionValidation.js';
+import { versionStorageConnectionUpdateSchema } from '../../domain/versionStorageConnectionValidation.js';
 import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
 import * as contract from '@mmt/contracts/schemas';
@@ -372,10 +373,9 @@ const REPORT_CONTENT_ERRORS = routeError(
   'report_block_id_duplicate',
 );
 
-// 人・API・SDKによるバージョンの登録で、ストレージ接続の指定を断る理由。
+// バージョンの登録と、あとからの付け替えで、ストレージ接続の指定を断る理由。
 const STORAGE_CONNECTION_ERROR_CODES = [
   'data_catalog_storage_connection_not_applicable',
-  'data_catalog_storage_connection_required',
   'data_catalog_storage_connection_unknown',
 ] as const;
 
@@ -3072,6 +3072,26 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: 'mado S3 Data Catalogの画面のURLとストレージ接続（未接続ならurlはnull）',
     access: PROJECT_VIEWER,
     responses: { 200: contract.dataCatalogReferenceSchema },
+  },
+  {
+    method: 'put',
+    path: '/api/projects/:p/datasets/:id/versions/:v/data-catalog-storage-connection',
+    tag: 'registry',
+    summary: '登録済みのDatasetVersionのストレージ接続を付ける・直す・外す（nullで外す）',
+    access: REGISTRY_WRITE,
+    body: versionStorageConnectionUpdateSchema,
+    responses: { 200: contract.datasetVersionSchema },
+    errors: routeError(422, ...STORAGE_CONNECTION_ERROR_CODES),
+  },
+  {
+    method: 'put',
+    path: '/api/projects/:p/models/:id/versions/:v/data-catalog-storage-connection',
+    tag: 'registry',
+    summary: '登録済みのModelVersionのストレージ接続を付ける・直す・外す（nullで外す）',
+    access: REGISTRY_WRITE,
+    body: versionStorageConnectionUpdateSchema,
+    responses: { 200: contract.modelVersionSchema },
+    errors: routeError(422, ...STORAGE_CONNECTION_ERROR_CODES),
   },
   {
     method: 'get',

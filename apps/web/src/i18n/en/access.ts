@@ -109,6 +109,8 @@ export const auditActionLabels = {
   'promotion_policy.owner.transfer': 'Change promotion policy owner',
   'promotion.evaluation.reevaluate': 'Re-evaluate promotion',
   'dataset.version.parents.append': 'Add dataset version parents',
+  'dataset.version.storage_connection.set': 'Change dataset version storage connection',
+  'model.version.storage_connection.set': 'Change model version storage connection',
   'model.training_source.associate': 'Link model training source',
   'run.training_data_stage.append': 'Record training data configuration',
   'model_alias.protection.set': 'Protect alias',

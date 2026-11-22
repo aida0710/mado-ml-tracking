@@ -512,7 +512,7 @@ export interface ModelVersionCreate {
   parentModelVersionIds?: string[];
   sourceRunId?: string | null;
   weightsUri?: string | null;
-  /** mado S3 Data Catalogに接続済みで`weightsUri`が`s3://`なら必須。それ以外では指定できない。 */
+  /** 任意。mado S3 Data Catalogに接続済みで`weightsUri`が`s3://`のときだけ指定できる。 */
   dataCatalogStorageConnectionId?: string | null;
   artifactId?: string | null;
   defaultCodeVersionId?: string | null;

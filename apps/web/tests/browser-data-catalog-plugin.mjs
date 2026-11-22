@@ -205,17 +205,71 @@ try {
   assert.equal(await openInDataCatalog.first().getAttribute('target'), '_blank');
   await screenshot('dataset-storage-link-ja');
 
-  console.log('Storage links: versions without a storage connection, or with one that is gone, stay plain text');
-  for (const storageConnectionId of [null, 'removed01']) {
-    datasetVersion.dataCatalogStorageConnectionId = storageConnectionId;
-    await page.reload();
-    await page.getByText('s3://corpus/ja/train 1/', { exact: true }).first().waitFor();
-    // リンクは接続の一覧を読んでから出る。読み終えても出ないことを確かめる。
-    await page.waitForLoadState('networkidle');
-    assert.equal(await openInDataCatalog.count(), 0);
-  }
+  console.log('Storage links: a version whose storage connection is gone says so, and can be changed to a listed one');
+  const storageConnectionMissing = page.getByText('ストレージ接続が見つかりません', { exact: true });
+  const storageConnectionChanges = () =>
+    api.state.calls.filter(
+      (call) => call.method === 'PUT' && call.path.endsWith('/data-catalog-storage-connection'),
+    );
+  datasetVersion.dataCatalogStorageConnectionId = 'removed01';
+  await page.reload();
+  await storageConnectionMissing.first().waitFor();
+  assert.equal(await openInDataCatalog.count(), 0);
+  await screenshot('dataset-storage-connection-missing-ja');
+  await page.getByRole('button', { name: 'ストレージ接続を変更', exact: true }).first().click();
+  const editedStorageConnection = dialog().getByLabel('ストレージ接続', { exact: false });
+  // 見つからないIDは、選び直すまで値が消えないよう選択肢に残る。
+  assert.equal(await editedStorageConnection.inputValue(), 'removed01');
+  assert.deepEqual(await editedStorageConnection.locator('option').allTextContents(), [
+    '未設定', 'on-premises (onprem)', 'AWS (aws)', 'ストレージ接続が見つかりません (removed01)',
+  ]);
+  await screenshot('dataset-storage-connection-change-ja');
+  // 幅が変わると表は描き直される。開いたダイアログと選んだ値は残る。
+  const wideViewport = page.viewportSize();
+  await page.setViewportSize({ width: 520, height: 900 });
+  await page.setViewportSize(wideViewport);
+  assert.equal(await editedStorageConnection.inputValue(), 'removed01');
+  await editedStorageConnection.selectOption('aws01');
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  assert.deepEqual(storageConnectionChanges().at(-1).body, { dataCatalogStorageConnectionId: 'aws01' });
+  await openInDataCatalog.first().waitFor();
+  assert.equal(
+    await openInDataCatalog.first().getAttribute('href'),
+    `${DATA_CATALOG_URL}/storage/aws01/corpus/ja/train%201/`,
+  );
+  assert.equal(await storageConnectionMissing.count(), 0);
 
-  console.log('Registration: an s3:// URI requires choosing a storage connection');
+  console.log('Storage links: a version without a storage connection stays plain text, and one can be set later');
+  datasetVersion.dataCatalogStorageConnectionId = null;
+  await page.reload();
+  await page.getByRole('button', { name: 'ストレージ接続を設定', exact: true }).first().waitFor();
+  assert.equal(await openInDataCatalog.count(), 0);
+  assert.equal(await storageConnectionMissing.count(), 0);
+  await screenshot('dataset-storage-connection-unset-ja');
+  await page.getByRole('button', { name: 'ストレージ接続を設定', exact: true }).first().click();
+  await dialog().getByLabel('ストレージ接続', { exact: false }).selectOption('onprem01');
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  assert.deepEqual(storageConnectionChanges().at(-1).body, { dataCatalogStorageConnectionId: 'onprem01' });
+  await openInDataCatalog.first().waitFor();
+  await page.getByRole('button', { name: 'ストレージ接続を変更', exact: true }).first().click();
+  await dialog().getByLabel('ストレージ接続', { exact: false }).selectOption('');
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  assert.deepEqual(storageConnectionChanges().at(-1).body, { dataCatalogStorageConnectionId: null });
+
+  console.log('Storage links: people who cannot edit the project see the notice but no button');
+  datasetVersion.dataCatalogStorageConnectionId = 'removed01';
+  api.state.project.role = 'viewer';
+  await page.reload();
+  await storageConnectionMissing.first().waitFor();
+  assert.equal(await page.getByRole('button', { name: 'ストレージ接続を変更', exact: true }).count(), 0);
+  api.state.project.role = 'admin';
+  datasetVersion.dataCatalogStorageConnectionId = null;
+  await page.reload();
+
+  console.log('Registration: an s3:// URI offers a storage connection, and it is optional');
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
   const uriField = dialog().getByLabel('URI', { exact: false }).first();
   const storageConnectionField = dialog().getByLabel('ストレージ接続', { exact: false });
@@ -223,9 +277,9 @@ try {
   assert.equal(await storageConnectionField.count(), 0, 'Other schemes do not ask for a storage connection');
   await uriField.fill('s3://corpus/ja/');
   await storageConnectionField.waitFor();
-  assert.equal(await storageConnectionField.evaluate((select) => select.required), true);
+  assert.equal(await storageConnectionField.evaluate((select) => select.required), false);
   assert.deepEqual(await storageConnectionField.locator('option').allTextContents(),
-    ['選んでください', 'on-premises (onprem)', 'AWS (aws)']);
+    ['未設定', 'on-premises (onprem)', 'AWS (aws)']);
   await screenshot('dataset-storage-connection-ja');
 
   console.log('Registration: a pasted mado S3 Data Catalog page URL fills the S3 URI and the storage connection');
@@ -247,7 +301,7 @@ try {
   assert.equal(created.body.uri, 's3://corpus/ja/a b.wav');
   assert.equal(created.body.dataCatalogStorageConnectionId, 'aws01');
 
-  console.log('Registration: a model version with s3:// weights also requires a storage connection');
+  console.log('Registration: a model version with s3:// weights can be saved with or without a storage connection');
   await page.goto(`${base}/projects/${projectId}/models`);
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
   await dialog().getByLabel('バージョン', { exact: false }).first().fill('v2');
@@ -257,10 +311,13 @@ try {
   await weightsStorageConnection.waitFor();
   const modelVersionCalls = () =>
     api.state.calls.filter((call) => call.method === 'POST' && /\/models\/[^/]+\/versions$/.test(call.path));
-  const callsBeforeSave = modelVersionCalls().length;
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
-  assert.equal(await weightsStorageConnection.evaluate((select) => select.validity.valueMissing), true);
-  assert.equal(modelVersionCalls().length, callsBeforeSave, 'Nothing is sent until a storage connection is chosen');
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  // 選ばずに保存すると、項目ごと送らない。
+  assert.equal(modelVersionCalls().at(-1).body.weightsUri, 's3://models/v2.bin');
+  assert.equal('dataCatalogStorageConnectionId' in modelVersionCalls().at(-1).body, false);
+  await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+  await dialog().getByLabel('バージョン', { exact: false }).first().fill('v3');
   // 一覧に無いストレージ接続のURLを貼ったときは、URIだけを入れて選び直してもらう。
   await weightsUriField.fill(`${DATA_CATALOG_URL}/storage/removed01/models/v2.bin`);
   await dialog().getByRole('button', { name: 'S3のURIに直す', exact: true }).click();

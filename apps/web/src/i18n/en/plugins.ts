@@ -31,8 +31,11 @@ export const pluginsText = {
   storageUrlIsDataCatalog: 'This is a mado S3 Data Catalog page URL. It can be changed to an S3 URI and storage connection:',
   useS3Uri: 'Change to S3 URI',
   storageConnection: 'Storage connection',
-  storageConnectionHint: 'The mado S3 Data Catalog storage connection that holds this S3 location. It decides where the link to mado S3 Data Catalog goes. It does not change which S3 compute targets read.',
-  chooseStorageConnection: 'Choose one',
+  storageConnectionHint: 'The mado S3 Data Catalog storage connection that holds this S3 location. It decides where the link to mado S3 Data Catalog goes. It does not change which S3 compute targets read. You can set or change it later.',
+  noStorageConnection: 'Not set',
+  storageConnectionNotFound: 'Storage connection not found',
+  setStorageConnection: 'Set storage connection',
+  changeStorageConnection: 'Change storage connection',
   storageConnections: 'Available storage connections',
   noStorageConnections: 'None (allow connections for the access token)',
 } as const;

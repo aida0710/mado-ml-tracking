@@ -11,7 +11,7 @@ import { MissingCodeNotice } from '../components/MissingCodeNotice';
 import { ArtifactUploadDialog } from './ArtifactUploadDialog';
 import { StorageConnectionField } from '../components/StorageConnectionField';
 import { parseArtifactReference } from '../lib/artifactReference';
-import { needsStorageConnection } from '../lib/dataCatalogStorage';
+import { acceptsStorageConnection } from '../lib/dataCatalogStorage';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
 import { toggleValue } from '../lib/formValues';
@@ -153,7 +153,7 @@ export function ModelVersionDialog({
                 form.change({ weightsUri: uri, storageConnectionId })
               }
             />
-            {needsStorageConnection(form.dataCatalog, draft.weightsUri) && (
+            {acceptsStorageConnection(form.dataCatalog, draft.weightsUri) && (
               <StorageConnectionField
                 storageConnections={form.dataCatalog.storageConnections}
                 value={draft.storageConnectionId}

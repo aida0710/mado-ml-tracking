@@ -747,6 +747,16 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
           items: [],
         });
       }
+      // 登録済みのバージョンのストレージ接続の付け替え（PUT …/versions/:v/data-catalog-storage-connection）。
+      if (
+        subresource === 'versions' &&
+        parts[4] === 'data-catalog-storage-connection' &&
+        method === 'PUT'
+      ) {
+        const version = item(versionCollection, parts[3]);
+        version.dataCatalogStorageConnectionId = body.dataCatalogStorageConnectionId;
+        return reply(version);
+      }
       if (subresource === 'versions' && method === 'GET')
         return list(versionCollection.filter((version) => version[parentKey] === key));
       if (subresource === 'versions' && method === 'POST') {

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
+import { dataCatalogStorageApi } from '../api/dataCatalogStorage';
 import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
 import { useProject } from '../hooks/useProject';
@@ -24,6 +25,7 @@ import { datasetVersionLabel } from '../lib/datasetVersionLabel';
 import { formatBytes, shortRunId } from '../lib/format';
 import { getFieldValue } from '../lib/formValues';
 import { StorageUri } from '../components/StorageUri';
+import { StorageConnectionDialog } from '../dialogs/StorageConnectionDialog';
 import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
@@ -33,6 +35,7 @@ export function DatasetsPage() {
   const { project, canEdit } = useProject();
   const [dialog, setDialog] = useState<'dataset' | DatasetVersionSource | null>(null);
   const [versionToDelete, setVersionToDelete] = useState<DatasetVersion | null>(null);
+  const [storageConnectionEdit, setStorageConnectionEdit] = useState<DatasetVersion | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
   // 直前のアーカイブ・アーカイブ解除の結果。そのデータセットを開いている間だけ見せる。
   const [archiveChange, setArchiveChange] = useState<Dataset | null>(null);
@@ -204,6 +207,9 @@ export function DatasetsPage() {
                                   uri={version.uri}
                                   storageConnectionId={version.dataCatalogStorageConnectionId}
                                   dataCatalog={dataCatalog}
+                                  onEditStorageConnection={
+                                    canEdit ? () => setStorageConnectionEdit(version) : undefined
+                                  }
                                 />
                               ),
                             },
@@ -314,6 +320,27 @@ export function DatasetsPage() {
             setDialog(null);
             registry.reload();
             registry.selectItem(dataset.id);
+          }}
+        />
+      )}
+      {storageConnectionEdit && (
+        <StorageConnectionDialog
+          dataCatalog={dataCatalog}
+          storageConnectionId={storageConnectionEdit.dataCatalogStorageConnectionId}
+          save={(storageConnectionId) =>
+            dataCatalogStorageApi.setDatasetVersionStorageConnection(
+              {
+                projectId: project.id,
+                parentId: storageConnectionEdit.datasetId,
+                versionId: storageConnectionEdit.id,
+              },
+              storageConnectionId,
+            )
+          }
+          onClose={() => setStorageConnectionEdit(null)}
+          onSaved={() => {
+            setStorageConnectionEdit(null);
+            registry.reload();
           }}
         />
       )}

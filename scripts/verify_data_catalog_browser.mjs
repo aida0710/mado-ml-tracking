@@ -140,13 +140,18 @@ try {
   await capture('real-dataset-storage-link-ja');
   const [datasetVersion] = (await api(`${projectPath}/datasets/${dataset.id}/versions`)).items;
   assert.equal(datasetVersion.dataCatalogStorageConnectionId, storageConnectionId);
-  // ストレージ接続の無いs3://は、APIが断る。
-  const refused = await page.request.fetch(`${base}/api${projectPath}/datasets/${dataset.id}/versions`, {
+  // ストレージ接続の無いs3://も登録でき、あとから付けられる。
+  const unset = await api(`${projectPath}/datasets/${dataset.id}/versions`, {
     method: 'POST',
-    data: { version: 'v2', uri: 's3://corpus/ja/', digest: `sha256:${'0'.repeat(64)}` },
+    body: { version: 'v2', uri: 's3://corpus/ja/', digest: `sha256:${'0'.repeat(64)}` },
+    status: 201,
   });
-  assert.equal(refused.status(), 422);
-  assert.equal((await refused.json()).code, 'data_catalog_storage_connection_required');
+  assert.equal(unset.dataCatalogStorageConnectionId, null);
+  const attached = await api(
+    `${projectPath}/datasets/${dataset.id}/versions/${unset.id}/data-catalog-storage-connection`,
+    { method: 'PUT', body: { dataCatalogStorageConnectionId: storageConnectionId } },
+  );
+  assert.equal(attached.dataCatalogStorageConnectionId, storageConnectionId);
 
   // モデルの重みのURIも同じ。登録はAPIで行い、画面が本物の応答を読めることを確かめる。
   const model = await api(`${projectPath}/models`, {

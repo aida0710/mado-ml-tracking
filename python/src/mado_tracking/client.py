@@ -479,7 +479,7 @@ class Client(ExperimentTasksClient):
 
         ``model_name``は、その名前の登録モデルを使い回し、まだ無いときだけ作る。
         サイトがmado S3 Data Catalogに接続済みで``weights_uri``が``s3://``なら、
-        ``data_catalog_storage_connection_id``が必須（``data_catalog``で一覧を引ける）。
+        ``data_catalog_storage_connection_id``を渡せる（任意。``data_catalog``で一覧を引ける）。
         """
         if model_id is None:
             if not model_name:
@@ -566,8 +566,8 @@ class Client(ExperimentTasksClient):
         ``version``、``uri``、``digest``が必須で、``digest``は
         64桁の小文字の16進数のSHA-256（``sha256:``の前置きは有っても無くてもよい）にする（APIは
         ほかの形を拒み、digestを渡されたとおりに保存する）。サイトがmado S3 Data Catalogに
-        接続済みで``uri``が``s3://``なら、``data_catalog_storage_connection_id``が必須
-        （``data_catalog``で一覧を引ける）。
+        接続済みで``uri``が``s3://``なら、``data_catalog_storage_connection_id``を渡せる
+        （任意。``data_catalog``で一覧を引ける）。
         """
         if files is not None:
             if uri is not None or digest is not None or data_catalog_storage_connection_id is not None:
@@ -608,6 +608,36 @@ class Client(ExperimentTasksClient):
     def data_catalog(self, project_id: str) -> dict[str, Any]:
         """mado S3 Data Catalogの画面のURL（未接続ならNone）と、選べるストレージ接続の一覧。"""
         return self.request("GET", self.project_path(project_id, "data-catalog"))
+
+    def set_dataset_version_storage_connection(
+        self, project_id: str, *, dataset_id: str, version_id: str, storage_connection_id: str | None
+    ) -> dict[str, Any]:
+        """登録済みのDatasetVersionのストレージ接続を付ける・直す。``None``で外す。
+
+        変わるのはストレージ接続だけで、uriとdigestは変わらない。
+        """
+        return self._set_version_storage_connection(
+            project_id, f"datasets/{path_id(dataset_id)}", version_id, storage_connection_id
+        )
+
+    def set_model_version_storage_connection(
+        self, project_id: str, *, model_id: str, version_id: str, storage_connection_id: str | None
+    ) -> dict[str, Any]:
+        """登録済みのModelVersionのストレージ接続を付ける・直す。``None``で外す。"""
+        return self._set_version_storage_connection(
+            project_id, f"models/{path_id(model_id)}", version_id, storage_connection_id
+        )
+
+    def _set_version_storage_connection(
+        self, project_id: str, parent_path: str, version_id: str, storage_connection_id: str | None
+    ) -> dict[str, Any]:
+        return self.request(
+            "PUT",
+            self.project_path(
+                project_id, f"{parent_path}/versions/{path_id(version_id)}/data-catalog-storage-connection"
+            ),
+            json={"dataCatalogStorageConnectionId": storage_connection_id},
+        )
 
     def _create_dataset(self, project_id: str, *, name: str | None, namespace: str, description: str) -> str:
         if not name:
