@@ -97,11 +97,16 @@ const environmentSchema = z.object({
   MMT_OIDC_CLIENT_ID: optionalSetting,
   MMT_OIDC_CLIENT_SECRET: optionalSetting,
   MMT_OIDC_ALLOWED_GROUPS: optionalSetting,
+  // falseにするとグループを見ず、ログインできる人をIdP側のポリシーだけで決める。
+  MMT_OIDC_REQUIRE_ALLOWED_GROUP: z.enum(['true', 'false']).default('true'),
   MMT_OIDC_ROLE_MAPPING_JSON: optionalSetting,
   MMT_OIDC_DEFAULT_ROLE: optionalSetting,
   // 既定は無効。メールアドレスで結び付けると、IdPのアカウントが同じメールアドレスの
   // ローカルアカウントを乗っ取れてしまう。
   MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: z.enum(['true', 'false']).default('false'),
+  // email_verifiedを送らないIdP（Cloudflare Accessなど）で、届いたメールアドレスを確認済みとして扱う。
+  // 利用者がメールアドレスを自分で変えられるIdPでは有効にしない。
+  MMT_OIDC_ASSUME_EMAIL_VERIFIED: z.enum(['true', 'false']).default('false'),
   MMT_OIDC_SCOPES: z.string().default(DEFAULT_OIDC_SCOPES),
   MMT_OIDC_LABEL: z.string().min(1).max(100).default('Authentik'),
   MMT_OIDC_ALLOW_INSECURE_HTTP: z.enum(['true', 'false']).default('false'),
@@ -199,6 +204,8 @@ export interface ApiConfig {
     clientSecret?: string;
     rolePolicy: OidcRolePolicy;
     autoLinkVerifiedEmail: boolean;
+    // email_verifiedが無いときだけ確認済みとして扱う。IdPがfalseと送ったときは上書きしない。
+    assumeEmailVerified: boolean;
     scopes: string;
     label: string;
     allowInsecureHttp: boolean;
@@ -343,11 +350,13 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       clientId: settings.MMT_OIDC_CLIENT_ID,
       clientSecret: settings.MMT_OIDC_CLIENT_SECRET,
       rolePolicy: createOidcRolePolicy({
+        requireAllowedGroup: settings.MMT_OIDC_REQUIRE_ALLOWED_GROUP === 'true',
         allowedGroups: settings.MMT_OIDC_ALLOWED_GROUPS,
         roleMappingJson: settings.MMT_OIDC_ROLE_MAPPING_JSON,
         defaultRole: settings.MMT_OIDC_DEFAULT_ROLE,
       }),
       autoLinkVerifiedEmail: settings.MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL === 'true',
+      assumeEmailVerified: settings.MMT_OIDC_ASSUME_EMAIL_VERIFIED === 'true',
       scopes: scopes.join(' '),
       label: settings.MMT_OIDC_LABEL,
       allowInsecureHttp,

@@ -275,7 +275,10 @@ export class AuthService {
           subject: idToken.sub,
           email,
           // 確認されていないメールアドレスは保存せず、紐付けにも使わない。provisioningでは拒む。
-          emailVerified: email !== '' && idToken.email_verified === true,
+          emailVerified:
+            email !== '' &&
+            (idToken.email_verified === true ||
+              (this.config.oidc!.assumeEmailVerified && idToken.email_verified === undefined)),
           displayName: typeof idToken.name === 'string' && idToken.name ? idToken.name : email,
           groups: Array.isArray(idToken.groups) ? idToken.groups : [],
         },

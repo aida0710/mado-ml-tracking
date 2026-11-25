@@ -85,6 +85,8 @@ openssl rand -base64 32
 ### ログインを許すgroupと全体管理者のgroup
 
 - `MMT_OIDC_ALLOWED_GROUPS`: ログインを許すgroup（カンマ区切り）。`oidc`と`hybrid`では必須で、空ならAPIが起動しません。どのgroupにも入っていない人はログインできず、ユーザーも作られません。
+- `MMT_OIDC_REQUIRE_ALLOWED_GROUP`: `false`にするとgroupを見ず、ログインできる人をIdP側のポリシーだけで決めます。groupsを渡さないIdP（Cloudflare AccessのGoogle連携など）で使います。このときは`MMT_OIDC_ALLOWED_GROUPS`を空にします。既定は`true`です。
+- `MMT_OIDC_ASSUME_EMAIL_VERIFIED`: `true`にすると、`email_verified`を送らないIdP（Cloudflare Accessなど）のメールアドレスを確認済みとして扱います。無いとそうしたIdPからはログインできません。IdPが`false`と送ったときは上書きしません。既定は`false`です。
 - `MMT_OIDC_ROLE_MAPPING_JSON`: group→全体のroleの対応表。roleは`admin`（全体管理者）と`user`（ログインだけ）の2つです。ほかの値はAPIの起動時にエラーになります。
 - `MMT_OIDC_DEFAULT_ROLE`: 対応表のどのgroupにも入っていない、許可された人のrole。既定は`user`です。
 

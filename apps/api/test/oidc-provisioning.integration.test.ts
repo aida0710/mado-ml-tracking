@@ -276,6 +276,35 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     expect(await deniedReasons()).toEqual(['email_not_verified']);
   });
 
+  describe('groupsとemail_verifiedを送らないIdP（Cloudflare Accessなど）', () => {
+    const idpDecides = {
+      MMT_OIDC_REQUIRE_ALLOWED_GROUP: 'false',
+      MMT_OIDC_ALLOWED_GROUPS: '',
+      MMT_OIDC_ROLE_MAPPING_JSON: '{}',
+    };
+
+    it('groupを必須にせず、emailを確認済みとみなす設定ならログインできる', async () => {
+      const app = application({ ...idpDecides, MMT_OIDC_ASSUME_EMAIL_VERIFIED: 'true' });
+      expect((await ssoLogin(app, { emailVerified: undefined, groups: [] })).status).toBe(302);
+      expect(await userCount()).toBe(1);
+    });
+
+    it('emailを確認済みとみなす設定が無ければ、email_verifiedが無いログインを拒否する', async () => {
+      const app = application(idpDecides);
+      expect(await ssoLogin(app, { emailVerified: undefined, groups: [] })).toEqual({
+        status: 401,
+        code: 'oidc_authentication_failed',
+      });
+      expect(await deniedReasons()).toEqual(['email_not_verified']);
+    });
+
+    it('IdPがemail_verified=falseと送ったときは、確認済みとみなす設定があっても拒否する', async () => {
+      const app = application({ ...idpDecides, MMT_OIDC_ASSUME_EMAIL_VERIFIED: 'true' });
+      expect((await ssoLogin(app, { emailVerified: false, groups: [] })).status).toBe(401);
+      expect(await deniedReasons()).toEqual(['email_not_verified']);
+    });
+  });
+
   it('無効化したSSOユーザーは401(user_disabled)でsessionを作らない', async () => {
     const app = application();
     expect((await ssoLogin(app, { groups: ['mmt-users'] })).status).toBe(302);

@@ -85,6 +85,8 @@ These settings keep a login for seven days, including inactivity. Update an exis
 ### Allowed groups and the administrator group
 
 - `MMT_OIDC_ALLOWED_GROUPS`: groups allowed to sign in (comma-separated). Required in `oidc` and `hybrid`; the API does not start if it is empty. People in none of these groups cannot sign in, and no user is created for them.
+- `MMT_OIDC_REQUIRE_ALLOWED_GROUP`: set to `false` to ignore groups and let the IdP's policy alone decide who can sign in. Use it with IdPs that do not send groups (for example, Cloudflare Access with its Google integration). Leave `MMT_OIDC_ALLOWED_GROUPS` empty in that case. The default is `true`.
+- `MMT_OIDC_ASSUME_EMAIL_VERIFIED`: set to `true` to treat the email from an IdP that does not send `email_verified` (for example, Cloudflare Access) as verified. Without it, nobody can sign in through such an IdP. An explicit `false` from the IdP is not overridden. The default is `false`.
 - `MMT_OIDC_ROLE_MAPPING_JSON`: a group → global role mapping. The roles are `admin` (global administrator) and `user` (sign-in only). Any other value is a startup error.
 - `MMT_OIDC_DEFAULT_ROLE`: the role of allowed users who match no group in the mapping. Default `user`.
 

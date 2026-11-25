@@ -26,7 +26,8 @@ export interface MockLogoutToken {
 export interface MockOidcClaims {
   subject: string;
   email: string | undefined;
-  emailVerified: boolean;
+  // undefinedならemail_verifiedをclaimに入れない（Cloudflare Accessのように送らないIdPを模す）。
+  emailVerified: boolean | undefined;
   name: string;
   groups: unknown[];
 }

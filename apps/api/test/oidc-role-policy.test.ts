@@ -10,6 +10,7 @@ import {
 } from '../src/domain/oidcRolePolicy.js';
 
 const policy: OidcRolePolicy = {
+  requireAllowedGroup: true,
   allowedGroups: ['mmt-users', 'mmt-admins'],
   roleMapping: { 'mmt-admins': 'admin', 'mmt-users': 'user' },
   defaultRole: 'user',
@@ -50,6 +51,12 @@ describe('resolveOidcAccess', () => {
     expect(resolveOidcAccess(appManaged, ['other']).allowed).toBe(false);
   });
 
+  it('groupを必須にしない設定なら、groupが届かなくてもログインさせる', () => {
+    const idpDecides = { ...policy, requireAllowedGroup: false, allowedGroups: [], roleMapping: {} };
+    expect(resolveOidcAccess(idpDecides, [])).toEqual({ allowed: true, groups: [] });
+    expect(resolveOidcAccess(idpDecides, ['other'])).toEqual({ allowed: true, groups: ['other'] });
+  });
+
   it('文字列でない・空・長すぎるgroupは判定にも保存にも使わない', () => {
     expect(resolveOidcAccess(policy, ['mmt-users', 1, '', 'x'.repeat(257), null])).toMatchObject({
       allowed: true,
@@ -60,6 +67,7 @@ describe('resolveOidcAccess', () => {
 
 describe('createOidcRolePolicy', () => {
   const base = {
+    requireAllowedGroup: true,
     allowedGroups: 'mmt-users, mmt-admins',
     roleMappingJson: undefined,
     defaultRole: undefined,
@@ -72,6 +80,14 @@ describe('createOidcRolePolicy', () => {
     );
     expect(() => createOidcRolePolicy({ ...base, allowedGroups: ' , ' })).toThrow(
       /MMT_OIDC_ALLOWED_GROUPS/,
+    );
+  });
+
+  it('groupを必須にしない設定は、MMT_OIDC_ALLOWED_GROUPSが空のときだけ作れる', () => {
+    const idpDecides = createOidcRolePolicy({ ...base, requireAllowedGroup: false, allowedGroups: undefined });
+    expect(idpDecides).toMatchObject({ requireAllowedGroup: false, allowedGroups: [] });
+    expect(() => createOidcRolePolicy({ ...base, requireAllowedGroup: false })).toThrow(
+      /MMT_OIDC_ALLOWED_GROUPS must be empty/,
     );
   });
 
