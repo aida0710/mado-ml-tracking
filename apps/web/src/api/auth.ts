@@ -1,5 +1,5 @@
 import { jsonRequestInit, requestJson } from '@mado/design-system/http';
-import { authConfigSchema, authMeSchema, devLoginResultSchema } from '@mmt/contracts/schemas';
+import { authConfigSchema, authMeSchema, devLoginResultSchema, logoutResultSchema } from '@mmt/contracts/schemas';
 import { z } from 'zod';
 
 export const authApi = {
@@ -14,5 +14,5 @@ export const authApi = {
     requestJson('/api/auth/local-login', { schema: authMeSchema, init: jsonRequestInit('POST', credentials) }),
   changePassword: (passwords: { currentPassword: string; newPassword: string }) =>
     requestJson('/api/auth/change-password', { schema: z.undefined(), init: jsonRequestInit('POST', passwords) }),
-  logout: () => requestJson('/api/auth/logout', { schema: z.undefined(), init: { method: 'POST' } }),
+  logout: () => requestJson('/api/auth/logout', { schema: logoutResultSchema, init: { method: 'POST' } }),
 };

@@ -54,7 +54,7 @@ describe.skipIf(!testDatabaseUrl)('プライベートOriginの認証と変更操
       cookie,
       headers: { Origin: origin },
     });
-    expect(logout.status).toBe(204);
+    expect(logout.status).toBe(200);
     expect((await request(app, '/api/auth/me', { cookie })).status).toBe(401);
   });
 

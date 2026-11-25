@@ -1,5 +1,5 @@
 import * as oidc from 'openid-client';
-import type { User } from '@mmt/contracts';
+import type { LogoutResult, User } from '@mmt/contracts';
 import type { ApiConfig } from '../config.js';
 import { first, transaction, type Database } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
@@ -278,7 +278,7 @@ export class AuthService {
           emailVerified:
             email !== '' &&
             (idToken.email_verified === true ||
-              (this.config.oidc!.assumeEmailVerified && idToken.email_verified === undefined)),
+              (this.config.oidc!.identifyByEmail && idToken.email_verified === undefined)),
           displayName: typeof idToken.name === 'string' && idToken.name ? idToken.name : email,
           groups: Array.isArray(idToken.groups) ? idToken.groups : [],
         },
@@ -328,6 +328,8 @@ export class AuthService {
         policy: {
           rolePolicy: settings.rolePolicy,
           autoLinkVerifiedEmail: settings.autoLinkVerifiedEmail,
+          identifyByEmail: settings.identifyByEmail,
+          allowedEmailDomains: settings.allowedEmailDomains,
         },
         metadata,
       });
@@ -396,12 +398,15 @@ export class AuthService {
     await this.backchannel.logout(logoutToken, metadata);
   }
 
+  // SSOのsessionなら、IdP側のsessionも終えられるよう、ブラウザで開くIdPのlogout URLを返す。
   async logout(
     principal: Principal | null,
     session: string | undefined,
     metadata: RequestMetadata,
-  ): Promise<void> {
-    if (!session) return;
+  ): Promise<LogoutResult> {
+    const idpLogoutUrl =
+      principal?.session?.authMethod === 'oidc' ? (this.config.oidc?.logoutUrl ?? null) : null;
+    if (!session) return { idpLogoutUrl: null };
     await transaction(this.database, async (connection) => {
       await revokeSession(connection, session);
       if (principal?.session)
@@ -416,6 +421,7 @@ export class AuthService {
           ...metadata,
         });
     });
+    return { idpLogoutUrl };
   }
 
   private async oidcProvider(): Promise<oidc.Configuration> {

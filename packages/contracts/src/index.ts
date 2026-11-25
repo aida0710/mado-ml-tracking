@@ -880,6 +880,10 @@ export interface AuthConfig {
     oidc: { label: string; loginUrl: string; managesGlobalRole: boolean } | null;
   };
 }
+/** POST /auth/logout の応答。idpLogoutUrlはSSOのsessionのときだけ入る、ブラウザで開くIdPのlogout URL。 */
+export interface LogoutResult {
+  idpLogoutUrl: string | null;
+}
 export interface AuthMe {
   user: User;
   mustChangePassword: boolean;

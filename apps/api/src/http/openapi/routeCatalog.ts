@@ -479,9 +479,10 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/auth/logout',
     tag: 'auth',
+    // SSOのsessionでMMT_OIDC_LOGOUT_URLがあれば、ブラウザで開くIdPのlogout URLを返す。
     summary: 'logout',
     access: { kind: 'public' },
-    responses: { 204: null },
+    responses: { 200: contract.logoutResultSchema },
     errors: routeError(403, 'invalid_origin'),
   },
   {

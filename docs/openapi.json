@@ -988,8 +988,15 @@
         },
         "parameters": [],
         "responses": {
-          "204": {
-            "description": "本文なし"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResult"
+                }
+              }
+            }
           },
           "403": {
             "description": "権限がない",
@@ -59033,6 +59040,21 @@
           "timestamp",
           "level",
           "message"
+        ],
+        "additionalProperties": false
+      },
+      "LogoutResult": {
+        "type": "object",
+        "properties": {
+          "idpLogoutUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "idpLogoutUrl"
         ],
         "additionalProperties": false
       },

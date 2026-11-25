@@ -10,6 +10,7 @@ import type { RequestMetadata } from '../http/requestMetadata.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
 import {
   findAutoLinkCandidates,
+  findHumanUserIdsByEmail,
   findOidcIdentityUserId,
   findUser,
   insertOidcUser,
@@ -40,6 +41,8 @@ export interface OidcClaims {
 // auth.oidc.deniedの監査イベントで理由を読む。
 export type OidcLoginDenialReason =
   | 'email_not_verified'
+  | 'email_domain_not_allowed'
+  | 'ambiguous_email'
   | 'group_not_allowed'
   | 'privileged_link_required'
   | 'user_disabled'
@@ -58,7 +61,18 @@ export class OidcLoginDeniedError extends Error {
 
 export interface OidcProvisioningPolicy {
   rolePolicy: OidcRolePolicy;
+  // ローカルアカウントへだけ結び付ける。特権を持つアカウントへは結び付けない。
   autoLinkVerifiedEmail: boolean;
+  // メールアドレスで人を見分ける。まだ結び付いていないSSOのidentityを、メールアドレスが一致する
+  // ユーザー（全体管理者や、別のIdPで入っていたユーザーも）へ結び付ける。省略はfalse。
+  identifyByEmail?: boolean;
+  // 空でなければ、このドメイン（小文字）の確認済みメールアドレスの人だけを通す。省略は制限なし。
+  allowedEmailDomains?: string[];
+}
+
+export function isAllowedEmailDomain(allowedEmailDomains: readonly string[], email: string): boolean {
+  if (allowedEmailDomains.length === 0) return true;
+  return allowedEmailDomains.includes(email.slice(email.lastIndexOf('@') + 1).toLowerCase());
 }
 
 export interface OidcSyncInput {
@@ -152,6 +166,17 @@ export async function syncOidcIdentity(
   return syncAccount(connection, input, { created: false, linkedExisting: false });
 }
 
+// メールアドレスで人を見分けるときの結び付け先。同じメールアドレスの人が複数いると、どれが本人か
+// 決められないので、新しいユーザーを作らずに拒否する（全体管理でメールアドレスを直してもらう）。
+async function findHumanUserIdByEmail(
+  connection: PoolClient,
+  email: string,
+): Promise<string | undefined> {
+  const userIds = await findHumanUserIdsByEmail(connection, email);
+  if (userIds.length > 1) throw new OidcLoginDeniedError('ambiguous_email');
+  return userIds[0];
+}
+
 async function findLinkableLocalUserId(
   connection: PoolClient,
   email: string,
@@ -172,12 +197,17 @@ export async function provisionOidcLogin(
 ): Promise<User> {
   const { claims, policy } = login;
   if (!claims.emailVerified) throw new OidcLoginDeniedError('email_not_verified');
+  if (!isAllowedEmailDomain(policy.allowedEmailDomains ?? [], claims.email))
+    throw new OidcLoginDeniedError('email_domain_not_allowed');
   let userId = await findOidcIdentityUserId(connection, claims);
   const access = resolveOidcAccess(policy.rolePolicy, claims.groups);
   // 誰かを作る前に確かめるので、許可されたグループの外のユーザーには行が作られない。
   if (!access.allowed) throw new OidcLoginDeniedError('group_not_allowed', userId ?? null);
   const origin: AccountOrigin = { created: false, linkedExisting: false };
-  if (!userId && policy.autoLinkVerifiedEmail) {
+  if (!userId && policy.identifyByEmail) {
+    userId = await findHumanUserIdByEmail(connection, claims.email);
+    origin.linkedExisting = userId !== undefined;
+  } else if (!userId && policy.autoLinkVerifiedEmail) {
     userId = await findLinkableLocalUserId(connection, claims.email);
     origin.linkedExisting = userId !== undefined;
   }

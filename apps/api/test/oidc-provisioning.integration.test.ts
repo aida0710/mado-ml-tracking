@@ -276,31 +276,67 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     expect(await deniedReasons()).toEqual(['email_not_verified']);
   });
 
-  describe('groupsとemail_verifiedを送らないIdP（Cloudflare Accessなど）', () => {
-    const idpDecides = {
+  describe('メールアドレスで人を見分けるIdP（Cloudflare Accessなど）', () => {
+    // groupsとemail_verifiedを送らないIdPを、メールアドレスで人を見分けて使う設定。
+    const identifyByEmail = {
       MMT_OIDC_REQUIRE_ALLOWED_GROUP: 'false',
       MMT_OIDC_ALLOWED_GROUPS: '',
       MMT_OIDC_ROLE_MAPPING_JSON: '{}',
+      MMT_OIDC_IDENTIFY_BY_EMAIL: 'true',
+      MMT_OIDC_ALLOWED_EMAIL_DOMAINS: 'example.test',
     };
 
-    it('groupを必須にせず、emailを確認済みとみなす設定ならログインできる', async () => {
-      const app = application({ ...idpDecides, MMT_OIDC_ASSUME_EMAIL_VERIFIED: 'true' });
+    it('groupsとemail_verifiedが届かなくてもログインできる', async () => {
+      const app = application(identifyByEmail);
       expect((await ssoLogin(app, { emailVerified: undefined, groups: [] })).status).toBe(302);
       expect(await userCount()).toBe(1);
     });
 
-    it('emailを確認済みとみなす設定が無ければ、email_verifiedが無いログインを拒否する', async () => {
-      const app = application(idpDecides);
-      expect(await ssoLogin(app, { emailVerified: undefined, groups: [] })).toEqual({
-        status: 401,
-        code: 'oidc_authentication_failed',
-      });
+    it('別のIdPで入っていた全体管理者へ、メールアドレスで結び付ける', async () => {
+      const adminId = await createLocalUser({ username: 'boss', email: 'Boss@example.test', isAdmin: true });
+      await harness.database.query(
+        `INSERT INTO user_oidc_identities(issuer,subject,user_id,email_at_login,email_verified)
+        VALUES('https://old-idp.example.test','old-subject',$1,'boss@example.test',true)`,
+        [adminId],
+      );
+      const app = application(identifyByEmail);
+      expect(
+        (await ssoLogin(app, { email: 'boss@example.test', emailVerified: undefined, groups: [] })).status,
+      ).toBe(302);
+      expect(await userCount()).toBe(1);
+      expect(await oidcUser()).toEqual({ id: adminId, is_admin: true });
+    });
+
+    it('許可したドメインでないメールアドレスは、ユーザーを作らずに拒否する', async () => {
+      const app = application(identifyByEmail);
+      expect(
+        (await ssoLogin(app, { email: 'someone@other.test', emailVerified: undefined, groups: [] })).status,
+      ).toBe(401);
+      expect(await userCount()).toBe(0);
+      expect(await deniedReasons()).toEqual(['email_domain_not_allowed']);
+    });
+
+    it('同じメールアドレスのユーザーが複数いれば、どれにも結び付けずに拒否する', async () => {
+      await createLocalUser({ username: 'twin-a', email: 'oidc@example.test' });
+      await createLocalUser({ username: 'twin-b', email: 'OIDC@example.test' });
+      const app = application(identifyByEmail);
+      expect((await ssoLogin(app, { emailVerified: undefined, groups: [] })).status).toBe(401);
+      expect(await deniedReasons()).toEqual(['ambiguous_email']);
+    });
+
+    it('IdPがemail_verified=falseと送ったときは拒否する', async () => {
+      const app = application(identifyByEmail);
+      expect((await ssoLogin(app, { emailVerified: false, groups: [] })).status).toBe(401);
       expect(await deniedReasons()).toEqual(['email_not_verified']);
     });
 
-    it('IdPがemail_verified=falseと送ったときは、確認済みとみなす設定があっても拒否する', async () => {
-      const app = application({ ...idpDecides, MMT_OIDC_ASSUME_EMAIL_VERIFIED: 'true' });
-      expect((await ssoLogin(app, { emailVerified: false, groups: [] })).status).toBe(401);
+    it('メールアドレスで見分けない設定では、email_verifiedが無いログインを拒否する', async () => {
+      const app = application({
+        MMT_OIDC_REQUIRE_ALLOWED_GROUP: 'false',
+        MMT_OIDC_ALLOWED_GROUPS: '',
+        MMT_OIDC_ROLE_MAPPING_JSON: '{}',
+      });
+      expect((await ssoLogin(app, { emailVerified: undefined, groups: [] })).status).toBe(401);
       expect(await deniedReasons()).toEqual(['email_not_verified']);
     });
   });

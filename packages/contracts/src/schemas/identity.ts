@@ -5,6 +5,7 @@ import type {
   AuthConfig,
   AuthMe,
   CurrentApiToken,
+  LogoutResult,
   Experiment,
   Project,
   TokenSummary,
@@ -67,6 +68,10 @@ export const authMeSchema = namedContractSchema(
   'AuthMe',
   z.strictObject({ user: userSchema, mustChangePassword: z.boolean() }),
 );
+export const logoutResultSchema = namedContractSchema(
+  'LogoutResult',
+  z.strictObject({ idpLogoutUrl: z.string().nullable() }),
+);
 /** POST /auth/dev-login（開発モードのログイン）の応答。 */
 export const devLoginResultSchema = z.strictObject({ user: userSchema });
 /** GET /auth/groups: ユーザーにこれまで付いたことのあるgroup名。 */
@@ -119,6 +124,7 @@ type _Project = Expect<MutuallyAssignable<z.infer<typeof projectSchema>, Project
 type _Experiment = Expect<MutuallyAssignable<z.infer<typeof experimentSchema>, Experiment>>;
 type _AuthConfig = Expect<MutuallyAssignable<z.infer<typeof authConfigSchema>, AuthConfig>>;
 type _AuthMe = Expect<MutuallyAssignable<z.infer<typeof authMeSchema>, AuthMe>>;
+type _LogoutResult = Expect<MutuallyAssignable<z.infer<typeof logoutResultSchema>, LogoutResult>>;
 type _TokenSummary = Expect<MutuallyAssignable<z.infer<typeof tokenSummarySchema>, TokenSummary>>;
 type _CurrentApiToken = Expect<
   MutuallyAssignable<z.infer<typeof currentApiTokenSchema>, CurrentApiToken>

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { AuthConfig, AuthMe } from '@mmt/contracts';
+import type { AuthConfig, AuthMe, LogoutResult } from '@mmt/contracts';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import type { AuthService } from '../services/authService.js';
@@ -165,13 +165,13 @@ export function authRoutes(auth: AuthService): Hono<ApiEnvironment> {
   });
   routes.post('/logout', async (context) => {
     validateOrigin(context.req.header('Origin'), auth.config);
-    await auth.logout(
+    const result = await auth.logout(
       context.get('principal'),
       getCookie(context, SESSION_COOKIE),
       requestMetadata(context),
     );
     deleteCookie(context, SESSION_COOKIE, { path: '/', secure: auth.config.secureCookies });
-    return context.body(null, 204);
+    return context.json<LogoutResult>(result);
   });
   return routes;
 }

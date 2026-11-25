@@ -161,4 +161,29 @@ describe('OIDCの起動設定', () => {
       /MMT_OIDC_SCOPES/,
     );
   });
+
+  it('メールアドレスで人を見分けるなら、ドメインの絞り込みを必須にし、自動連携とは同時に使えない', () => {
+    const identify = { ...oidcEnvironment, MMT_OIDC_IDENTIFY_BY_EMAIL: 'true' };
+    expect(() => loadConfig(identify)).toThrow(/MMT_OIDC_ALLOWED_EMAIL_DOMAINS is required/);
+    expect(
+      loadConfig({ ...identify, MMT_OIDC_ALLOWED_EMAIL_DOMAINS: 'Example.test, example.org' }).oidc,
+    ).toMatchObject({ identifyByEmail: true, allowedEmailDomains: ['example.test', 'example.org'] });
+    expect(() =>
+      loadConfig({
+        ...identify,
+        MMT_OIDC_ALLOWED_EMAIL_DOMAINS: 'example.test',
+        MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true',
+      }),
+    ).toThrow(/MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL must be false/);
+  });
+
+  it('IdPのlogout URLは、URLの形のときだけ受け付ける', () => {
+    expect(
+      loadConfig({ ...oidcEnvironment, MMT_OIDC_LOGOUT_URL: 'https://idp.example/logout' }).oidc?.logoutUrl,
+    ).toBe('https://idp.example/logout');
+    expect(loadConfig(oidcEnvironment).oidc?.logoutUrl).toBeNull();
+    expect(() => loadConfig({ ...oidcEnvironment, MMT_OIDC_LOGOUT_URL: 'not a url' })).toThrow(
+      /MMT_OIDC_LOGOUT_URL/,
+    );
+  });
 });
