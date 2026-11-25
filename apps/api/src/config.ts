@@ -97,11 +97,21 @@ const environmentSchema = z.object({
   MMT_OIDC_CLIENT_ID: optionalSetting,
   MMT_OIDC_CLIENT_SECRET: optionalSetting,
   MMT_OIDC_ALLOWED_GROUPS: optionalSetting,
+  // falseにするとグループを見ず、ログインできる人をIdP側のポリシーだけで決める。
+  MMT_OIDC_REQUIRE_ALLOWED_GROUP: z.enum(['true', 'false']).default('true'),
   MMT_OIDC_ROLE_MAPPING_JSON: optionalSetting,
   MMT_OIDC_DEFAULT_ROLE: optionalSetting,
   // 既定は無効。メールアドレスで結び付けると、IdPのアカウントが同じメールアドレスの
   // ローカルアカウントを乗っ取れてしまう。
   MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: z.enum(['true', 'false']).default('false'),
+  // trueでユーザーをメールアドレスで見分ける。email_verifiedを送らないIdP（Cloudflare Accessなど）の
+  // メールアドレスを確認済みとして扱い、まだ結び付いていないSSOのidentityを、メールアドレスが一致する
+  // ユーザー（全体管理者も）へ結び付ける。IdPのメールアドレスを信用できるときだけ使う。
+  MMT_OIDC_IDENTIFY_BY_EMAIL: z.enum(['true', 'false']).default('false'),
+  // カンマ区切り。空でなければ、このドメインの確認済みメールアドレスの人だけを通す。
+  MMT_OIDC_ALLOWED_EMAIL_DOMAINS: optionalSetting,
+  // ログアウトのときに開くIdPのlogout URL。end_session_endpointを出さないIdP（Cloudflare Accessなど）で指定する。
+  MMT_OIDC_LOGOUT_URL: optionalSetting,
   MMT_OIDC_SCOPES: z.string().default(DEFAULT_OIDC_SCOPES),
   MMT_OIDC_LABEL: z.string().min(1).max(100).default('Authentik'),
   MMT_OIDC_ALLOW_INSECURE_HTTP: z.enum(['true', 'false']).default('false'),
@@ -199,6 +209,12 @@ export interface ApiConfig {
     clientSecret?: string;
     rolePolicy: OidcRolePolicy;
     autoLinkVerifiedEmail: boolean;
+    // メールアドレスで人を見分ける。email_verifiedが無いときは確認済みとして扱う（falseと送られたら上書きしない）。
+    identifyByEmail: boolean;
+    // 空でなければ、このドメイン（小文字）の確認済みメールアドレスの人だけを通す。
+    allowedEmailDomains: string[];
+    // SSOのsessionをログアウトするときにブラウザで開くIdPのURL。
+    logoutUrl: string | null;
     scopes: string;
     label: string;
     allowInsecureHttp: boolean;
@@ -338,16 +354,38 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     } catch {
       throw new Error('MMT_SESSION_ENCRYPTION_KEY must be base64 of 32 bytes');
     }
+    const identifyByEmail = settings.MMT_OIDC_IDENTIFY_BY_EMAIL === 'true';
+    const autoLinkVerifiedEmail = settings.MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL === 'true';
+    const allowedEmailDomains = [
+      ...new Set(
+        (settings.MMT_OIDC_ALLOWED_EMAIL_DOMAINS ?? '')
+          .split(',')
+          .map((domain) => domain.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ];
+    // メールアドレスで人を見分けるなら、信用するドメインを必ず絞る。IdP側の設定が広げられても、ここで止める。
+    if (identifyByEmail && allowedEmailDomains.length === 0)
+      throw new Error('MMT_OIDC_ALLOWED_EMAIL_DOMAINS is required when MMT_OIDC_IDENTIFY_BY_EMAIL is true');
+    // 結び付け方が2通り書いてあると、どちらで結び付けたか読み違えるので起動させない。
+    if (identifyByEmail && autoLinkVerifiedEmail)
+      throw new Error('MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL must be false when MMT_OIDC_IDENTIFY_BY_EMAIL is true');
+    if (settings.MMT_OIDC_LOGOUT_URL && !URL.canParse(settings.MMT_OIDC_LOGOUT_URL))
+      throw new Error('MMT_OIDC_LOGOUT_URL must be a URL');
     oidc = {
       issuer: settings.MMT_OIDC_ISSUER_URL,
       clientId: settings.MMT_OIDC_CLIENT_ID,
       clientSecret: settings.MMT_OIDC_CLIENT_SECRET,
       rolePolicy: createOidcRolePolicy({
+        requireAllowedGroup: settings.MMT_OIDC_REQUIRE_ALLOWED_GROUP === 'true',
         allowedGroups: settings.MMT_OIDC_ALLOWED_GROUPS,
         roleMappingJson: settings.MMT_OIDC_ROLE_MAPPING_JSON,
         defaultRole: settings.MMT_OIDC_DEFAULT_ROLE,
       }),
-      autoLinkVerifiedEmail: settings.MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL === 'true',
+      autoLinkVerifiedEmail,
+      identifyByEmail,
+      allowedEmailDomains,
+      logoutUrl: settings.MMT_OIDC_LOGOUT_URL ?? null,
       scopes: scopes.join(' '),
       label: settings.MMT_OIDC_LABEL,
       allowInsecureHttp,

@@ -25,6 +25,7 @@ describe.skipIf(!testDatabaseUrl)(
         MMT_OIDC_CLIENT_SECRET: 'mock-client-secret',
         MMT_OIDC_ALLOW_INSECURE_HTTP: 'true',
         MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
+        MMT_OIDC_LOGOUT_URL: 'https://idp.example/logout',
       });
       app = createApplication({ config, database: harness.database, stores: harness.stores }).app;
     });
@@ -132,9 +133,10 @@ describe.skipIf(!testDatabaseUrl)(
         .getSetCookie()
         .find((cookie) => cookie.startsWith('mmt_session='))!
         .split(';')[0]!;
-      expect(
-        (await request(app, '/api/auth/logout', { method: 'POST', cookie: session })).status,
-      ).toBe(204);
+      const logout = await request(app, '/api/auth/logout', { method: 'POST', cookie: session });
+      expect(logout.status).toBe(200);
+      // SSOのsessionなので、IdP側のsessionも終えるURLを返す。
+      expect(await logout.json()).toEqual({ idpLogoutUrl: 'https://idp.example/logout' });
       expect((await request(app, '/api/auth/me', { cookie: session })).status).toBe(401);
     });
 

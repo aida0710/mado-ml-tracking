@@ -103,10 +103,14 @@ MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 
 | 設定 | 意味 |
 |---|---|
-| `MMT_OIDC_ALLOWED_GROUPS` | loginを許すgroup（カンマ区切り）。`oidc`/`hybrid`で必須で、空なら起動しません |
+| `MMT_OIDC_ALLOWED_GROUPS` | loginを許すgroup（カンマ区切り）。`oidc`/`hybrid`で必須で、空なら起動しません。`MMT_OIDC_REQUIRE_ALLOWED_GROUP=false`のときは空にします |
+| `MMT_OIDC_REQUIRE_ALLOWED_GROUP` | `false`にするとgroupを見ず、loginできる人をIdP側のポリシーだけで決めます。groupsを渡さないIdP向け。既定`true` |
 | `MMT_OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー。空（未設定か`{}`）なら、Authentikはloginできるかどうかだけを決め、全体管理者は「全体管理」→「ユーザー」で決めます |
 | `MMT_OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。対応表が空なら、初回SSOで作るUserの全体role。既定`user` |
 | `MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL` | 同じemailのLocal Userへ自動連携するか。既定`false` |
+| `MMT_OIDC_IDENTIFY_BY_EMAIL` | `true`でユーザーをemailで見分けます。`email_verified`が無いemailを確認済みとし（IdPが`false`と送ったときは上書きしません）、まだ結び付いていないSSOのidentityを、emailが一致するユーザー（全体管理者や、別のIdPで入っていたユーザーも）へ結び付けます。同じemailのユーザーが複数いれば`ambiguous_email`で拒否します。`MMT_OIDC_ALLOWED_EMAIL_DOMAINS`が必須で、`MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL`とは同時に使えません。IdPのemailを信用できるときだけ有効にします。既定`false` |
+| `MMT_OIDC_ALLOWED_EMAIL_DOMAINS` | 空でなければ、このドメイン（カンマ区切り）の確認済みemailの人だけを通します（`email_domain_not_allowed`）。IdP側のポリシーが広げられても、ここで止まります |
+| `MMT_OIDC_LOGOUT_URL` | ログアウトのときにブラウザで開くIdPのlogout URL。SSOのsessionのときだけ開きます。`end_session_endpoint`を出さないIdP（Cloudflare Accessなど）で指定します |
 | `MMT_OIDC_SCOPES` | 要求するscope。既定`openid profile email offline_access`。`openid`が無いと起動しません。refresh tokenにはProvider側の`offline_access` mappingも必要です |
 | `MMT_SESSION_ENCRYPTION_KEY` | SSO sessionに保存するaccess/refresh tokenの暗号鍵（base64の32 byte、AES-256-GCM）。`oidc`/`hybrid`で必須で、無いか形式が違うと起動しません |
 | `MMT_OIDC_RECHECK_SECONDS` | SSO sessionをUserInfoで確かめ直す間隔（秒）。既定`60` |
@@ -114,13 +118,15 @@ MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 
 対応表に書いたgroupも`MMT_OIDC_ALLOWED_GROUPS`に入れてください。許可groupに無いgroupだけを持つ人は、対応表に関係なくloginできません。
 
+groupsを渡さないIdP（Cloudflare AccessのGoogle連携など）では、`MMT_OIDC_REQUIRE_ALLOWED_GROUP=false`にして`MMT_OIDC_ALLOWED_GROUPS`を空にし、対応表も空にします。loginできる人はIdP側のポリシーで決め、全体管理者は「全体管理」→「ユーザー」で付け外しします。`email_verified`も送らないIdPでは、`MMT_OIDC_IDENTIFY_BY_EMAIL=true`と`MMT_OIDC_ALLOWED_EMAIL_DOMAINS`も要ります（無いと`email_not_verified`で拒否します）。IdPを移すときは、切り替える前に既存ユーザーのemailを新しいIdPのemailにそろえておくと、初めてのSSOで同じユーザーへ結び付きます。共有のPCで使うなら`MMT_OIDC_LOGOUT_URL`も指定します。見ないgroupが書いてあると、そこで絞れていると読み違えるので、APIは起動しません。sessionの再確認は、UserInfoとrefresh tokenでの更新が通るかで判断します。
+
 
 migration 042を含むバージョンへ更新するときは、先に`MMT_SESSION_ENCRYPTION_KEY`を`.env`へ足します（無いとAPIが起動しません）。042はtokenを持たない既存のSSO sessionを失効させるので、SSOの利用者は更新後に一度ログインし直します。Local sessionはそのまま使えます。鍵を変えると、保存済みのtokenを復号できないSSO sessionは次の再確認で失効し、再ログインになります。
 
 ### Userと全体roleの同期規則
 
 - 初回SSOでUserをJIT作成します。self-signupの画面はありません。
-- `MMT_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない人は拒否し、Userも作りません。
+- `MMT_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない人は拒否し、Userも作りません（`MMT_OIDC_REQUIRE_ALLOWED_GROUP=false`のときはgroupを見ません）。
 - 対応表があれば、loginとsessionの再確認のたびに、全体管理者かどうか（`users.is_admin`）を対応表から同期します。複数groupに該当すれば強い方（`admin`）になります。
 - 対応表が空なら、`is_admin`は初回SSOで`MMT_OIDC_DEFAULT_ROLE`から決め、以後のloginと再確認では変えません。全体管理者は「全体管理」→「ユーザー」で付け外しします。社内の全員が入るgroupを1つだけ`MMT_OIDC_ALLOWED_GROUPS`に入れる運用に向きます。
 - loginとsessionの再確認のたびに、その人のgroupを`user_groups`へ保存し直します。ProjectのSSO group bindingはこの表を使います。

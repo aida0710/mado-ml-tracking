@@ -341,6 +341,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
         },
         policy: {
           rolePolicy: createOidcRolePolicy({
+            requireAllowedGroup: true,
             allowedGroups: 'mmt-users',
             roleMappingJson: undefined,
             defaultRole: undefined,

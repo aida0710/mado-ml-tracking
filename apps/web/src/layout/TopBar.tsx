@@ -58,8 +58,10 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
             isLoggingOut={mutation.pending}
             onLogout={() =>
               void mutation.run(async () => {
-                await authApi.logout();
-                auth.reload();
+                const { idpLogoutUrl } = await authApi.logout();
+                // SSOのsessionなら、IdP側のsessionも終える。終えないと共有のPCで次の人が前の人として入れる。
+                if (idpLogoutUrl) window.location.assign(idpLogoutUrl);
+                else auth.reload();
               })
             }
           />

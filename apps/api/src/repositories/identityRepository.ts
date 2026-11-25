@@ -106,6 +106,16 @@ export async function findAutoLinkCandidates(
   );
 }
 
+// このメールアドレスを持つ人間のユーザー。SSOのidentityやローカルの認証の有無は問わない。
+export async function findHumanUserIdsByEmail(connection: Connection, email: string): Promise<string[]> {
+  const found = await rows<{ id: string }>(
+    connection,
+    `SELECT id FROM users WHERE lower(email)=lower($1) AND kind='human' ORDER BY id FOR UPDATE`,
+    [email],
+  );
+  return found.map((user) => user.id);
+}
+
 export async function insertOidcUser(
   connection: Connection,
   profile: { email: string; displayName: string },

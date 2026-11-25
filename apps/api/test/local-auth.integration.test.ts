@@ -266,9 +266,10 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとMMT_AUTH_MODE�
       expect((await request(app, '/api/auth/me', { cookie: idle })).status).toBe(401);
       const active = await sessionCookie(app, 'alice');
       expect((await request(app, '/api/auth/me', { cookie: active })).status).toBe(200);
-      expect(
-        (await request(app, '/api/auth/logout', { method: 'POST', cookie: active })).status,
-      ).toBe(204);
+      const logout = await request(app, '/api/auth/logout', { method: 'POST', cookie: active });
+      expect(logout.status).toBe(200);
+      // ローカルのsessionなので、IdPのlogout URLは返さない。
+      expect(await logout.json()).toEqual({ idpLogoutUrl: null });
       expect((await request(app, '/api/auth/me', { cookie: active })).status).toBe(401);
       expect((await auditRows('auth.logout')).map((row) => row.outcome)).toEqual(['success']);
     });

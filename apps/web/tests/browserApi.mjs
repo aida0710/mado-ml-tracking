@@ -412,7 +412,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return route.fulfill({ status: 204, body: '' });
     if (path === '/auth/logout') {
       state.loggedIn = false;
-      return route.fulfill({ status: 204, body: '' });
+      return reply({ idpLogoutUrl: null });
     }
     if (!state.loggedIn) return reply({ error: 'Unauthorized' }, 401);
     const dataCatalogAnswer = routeDataCatalogPlugin({

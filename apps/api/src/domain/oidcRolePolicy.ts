@@ -12,6 +12,9 @@ export type GlobalRole = (typeof GLOBAL_ROLES)[number];
 export const MAX_GROUP_NAME_LENGTH = 256;
 
 export interface OidcRolePolicy {
+  // falseならグループを見ず、ログインできる人はIdP側のポリシーで決まっているものとして扱う。
+  // groupsを渡さないIdP（Cloudflare AccessのGoogle連携など）のための設定。
+  requireAllowedGroup: boolean;
   allowedGroups: string[];
   roleMapping: Record<string, GlobalRole>;
   defaultRole: GlobalRole;
@@ -48,7 +51,7 @@ export function resolveOidcAccess(
   claimGroups: readonly unknown[],
 ): OidcAccess {
   const groups = normalizeGroups(claimGroups);
-  if (!groups.some((group) => policy.allowedGroups.includes(group)))
+  if (policy.requireAllowedGroup && !groups.some((group) => policy.allowedGroups.includes(group)))
     return { allowed: false, groups };
   if (!idpManagesGlobalRole(policy)) return { allowed: true, groups };
   const mappedRoles = groups.flatMap((group) => {
@@ -61,6 +64,8 @@ export function resolveOidcAccess(
 }
 
 export interface OidcRolePolicySettings {
+  // MMT_OIDC_REQUIRE_ALLOWED_GROUP。既定はtrue。
+  requireAllowedGroup: boolean;
   // カンマ区切りのMMT_OIDC_ALLOWED_GROUPS。
   allowedGroups: string | undefined;
   // MMT_OIDC_ROLE_MAPPING_JSON: {"<group>": "<global role>"}.
@@ -94,10 +99,14 @@ export function createOidcRolePolicy(settings: OidcRolePolicySettings): OidcRole
   const allowedGroups = normalizeGroups(
     (settings.allowedGroups ?? '').split(',').map((group) => group.trim()),
   );
-  if (allowedGroups.length === 0) throw new Error('MMT_OIDC_ALLOWED_GROUPS is required');
+  if (settings.requireAllowedGroup && allowedGroups.length === 0)
+    throw new Error('MMT_OIDC_ALLOWED_GROUPS is required when MMT_OIDC_REQUIRE_ALLOWED_GROUP is true');
+  // 見ないグループを書いておくと、そこで絞れていると読み違えるので起動させない。
+  if (!settings.requireAllowedGroup && allowedGroups.length > 0)
+    throw new Error('MMT_OIDC_ALLOWED_GROUPS must be empty when MMT_OIDC_REQUIRE_ALLOWED_GROUP is false');
   const defaultRole = settings.defaultRole ?? 'user';
   if (!isGlobalRole(defaultRole))
     throw new Error(`MMT_OIDC_DEFAULT_ROLE must be one of ${GLOBAL_ROLES.join(', ')}`);
   const roleMapping = parseRoleMapping(settings.roleMappingJson ?? '{}');
-  return { allowedGroups, roleMapping, defaultRole };
+  return { requireAllowedGroup: settings.requireAllowedGroup, allowedGroups, roleMapping, defaultRole };
 }
